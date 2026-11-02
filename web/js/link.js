@@ -10,6 +10,7 @@ N.link = (() => {
   let retryTimer = 0, pingTimer = 0, rateTimer = 0;
   let linesThisSecond = 0;
   let wantPort = '';             // the port we are trying to (re)connect to
+  let seenPorts = [];            // port list of the last refresh, to spot a board that was just plugged in
   const lastSet = {};            // key -> time we last sent SET for it (no SET storms)
   let lastStopResend = 0;
 
@@ -105,6 +106,9 @@ N.link = (() => {
   // ---------- connect / disconnect ----------
   function refreshPorts() { N.bridge.listPorts(); }
 
+  /** USB-serial chips (CP2102, CH340, FTDI, native USB). Bluetooth earbuds and speakers also show up as /dev/cu.* */
+  const isUSB = p => /usbserial|usbmodem|slab|wchusb|ch34|cp210|ftdi/i.test(p || '');
+
   function connect(path) {
     if (!path) return;
     if (S.source === 'demo') stopDemo(true);
@@ -148,6 +152,8 @@ N.link = (() => {
   // ---------- answers from the Mac ----------
   N.on('native:ports', list => {
     N.emit('ports', list);
+    const plugged = list.filter(p => isUSB(p) && !seenPorts.includes(p));
+    seenPorts = list;
     const auto = window.__NAZAR_AUTOCONNECT;
     if (auto && !N.autoTried && S.source === 'none' && list.includes(auto)) {
       N.autoTried = true;
@@ -157,6 +163,10 @@ N.link = (() => {
     } else if (S.link.state === 'idle' && S.source === 'none' && !N.autoTried && S.settings.port && list.includes(S.settings.port)) {
       N.autoTried = true;
       connect(S.settings.port);                           // at launch: back to the last port by itself
+    } else if (S.link.state === 'idle' && S.source === 'none' && plugged.length === 1) {
+      N.autoTried = true;
+      N.event('info', `ESP32 found on ${plugged[0].replace('/dev/', '')}. Connecting by itself.`);
+      connect(plugged[0]);                                // a board was just plugged in (or is the only one at launch)
     }
   });
 
@@ -200,5 +210,5 @@ N.link = (() => {
   // lines per second, for the key bar
   rateTimer = setInterval(() => { S.link.rate = linesThisSecond; linesThisSecond = 0; }, 1000);
 
-  return { refreshPorts, connect, disconnect, startDemo, stopDemo, send, syncTiming, handleLine };
+  return { refreshPorts, connect, disconnect, startDemo, stopDemo, send, syncTiming, handleLine, isUSB };
 })();

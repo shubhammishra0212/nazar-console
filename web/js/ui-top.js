@@ -15,7 +15,10 @@ N.uiTop = (() => {
     sel.innerHTML = '';
     if (!ports.length) sel.append(new Option(N.bridge.native ? 'No ESP32 found — plug it in' : 'USB needs the Mac app', ''));
     for (const p of ports) sel.append(new Option(short(p), p));
-    if (keep && ports.includes(keep)) sel.value = keep;
+    // a Bluetooth port picked while no board was plugged in gives way to the USB board when it appears
+    const usb = ports.filter(N.link.isUSB);
+    if (keep && ports.includes(keep) && (N.link.isUSB(keep) || !usb.length)) sel.value = keep;
+    else if (usb.length) sel.value = usb[0];
   }
 
   function render() {
