@@ -106,7 +106,7 @@ vision service, and `&show=agent|limits|serial|ai|camera|detail&after=20000` to 
 - **Inspection log** (Save inspections, and what the agent receives): `at, n, verdict, score, ms, v, ma, vib, vpk, lux,
   temp`. Light and temperature are the values at the photo. Because the belt is stopped at the photo, `v`, `ma`, `vib`
   and `vpk` are the median of the last second the belt was running before the stop (otherwise they would always read
-  "motor off"). Skipped parts are in the CSV with verdict SKIPPED codes (`AI_OFFLINE`, `TIMEOUT`, `NO_CAMERA`,
+  "motor off"). Skipped parts are in the CSV with their reason as the verdict (`AI_OFFLINE`, `TIMEOUT`, `NO_CAMERA`,
   `AI_ERROR`, `AI_OFF`, `NO_PART`); only PASS / HOLD / REJECT rows go to the agent.
 - **8D**: English only for now (`"lang":"en"`). Mark fix applied sets `fix_at`; the next draft compares before and
   after. Without the agent, Demo data gets a console-made template report, clearly marked.
