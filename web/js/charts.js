@@ -51,7 +51,7 @@ N.charts = (() => {
     return [0, top];
   }
 
-  function line(ctx, c, pts, X, Y, binary) {
+  function line(ctx, c, pts, X, Y, binary, fillY) {
     ctx.lineWidth = binary ? 1.6 : 2;
     ctx.strokeStyle = c.data;
     ctx.beginPath();
@@ -73,7 +73,14 @@ N.charts = (() => {
       ctx.stroke();
       ctx.lineTo(colX ?? 0, Y(0)); ctx.lineTo(X(pts.length ? pts[0][0] : 0), Y(0)); ctx.closePath();
       ctx.fillStyle = c.fill; ctx.fill();
-    } else ctx.stroke();
+    } else {
+      ctx.stroke();
+      // sparklines get a light wash under the line, down to the chart floor
+      if (fillY != null && colX != null) {
+        ctx.lineTo(colX, fillY); ctx.lineTo(X(pts[0][0]), fillY); ctx.closePath();
+        ctx.fillStyle = c.fill; ctx.fill();
+      }
+    }
   }
 
   function limits(ctx, c, sensor, Y, x0, x1, labels) {
@@ -106,7 +113,7 @@ N.charts = (() => {
     ctx.beginPath(); ctx.moveTo(0, h - 0.5); ctx.lineTo(w, h - 0.5); ctx.stroke();
     limits(ctx, c, sensor, Y, 0, w, false);
     if (!pts.length) return;
-    line(ctx, c, pts, X, Y, sensor.binary);
+    line(ctx, c, pts, X, Y, sensor.binary, h - 1);
     const last = pts[pts.length - 1];
     if (last[1] != null) {
       ctx.fillStyle = c.data; ctx.beginPath(); ctx.arc(X(last[0]), Y(last[1]), 3.5, 0, Math.PI * 2); ctx.fill();

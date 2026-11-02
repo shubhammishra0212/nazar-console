@@ -1,68 +1,84 @@
-/* tokens.css — fonts (bundled, offline) and the colour tokens of the machine-panel look, light and dark. */
+/* tokens.css — fonts (bundled, offline) and the colour tokens of the machine-panel look, light and dark.
+   Values follow the NAZAR line-monitor HMI: cabinet grey, graphite bars and tabs, signal yellow only for the
+   status band and engineer keys, one data blue for every chart. Green / amber / red only ever mean machine state. */
 
-@font-face { font-family: Barlow; font-weight: 500; src: url(../fonts/Barlow-500.woff2) format("woff2"); }
-@font-face { font-family: Barlow; font-weight: 600; src: url(../fonts/Barlow-600.woff2) format("woff2"); }
-@font-face { font-family: Barlow; font-weight: 700; src: url(../fonts/Barlow-700.woff2) format("woff2"); }
-@font-face { font-family: "Barlow Semi Condensed"; font-weight: 600; src: url(../fonts/BarlowSemiCondensed-600.woff2) format("woff2"); }
-@font-face { font-family: "Barlow Semi Condensed"; font-weight: 700; src: url(../fonts/BarlowSemiCondensed-700.woff2) format("woff2"); }
-@font-face { font-family: "Roboto Mono"; font-weight: 500; src: url(../fonts/RobotoMono-500.woff2) format("woff2"); }
-@font-face { font-family: "Roboto Mono"; font-weight: 600; src: url(../fonts/RobotoMono-600.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-weight: 500; font-display: block; src: url(../fonts/Barlow-500.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-weight: 600; font-display: block; src: url(../fonts/Barlow-600.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-weight: 700; font-display: block; src: url(../fonts/Barlow-700.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 600; font-display: block; src: url(../fonts/BarlowSemiCondensed-600.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 700; font-display: block; src: url(../fonts/BarlowSemiCondensed-700.woff2) format("woff2"); }
+@font-face { font-family: "Roboto Mono"; font-weight: 500; font-display: block; src: url(../fonts/RobotoMono-500.woff2) format("woff2"); }
+@font-face { font-family: "Roboto Mono"; font-weight: 600; font-display: block; src: url(../fonts/RobotoMono-600.woff2) format("woff2"); }
 
 :root {
   --cabinet: #D9DCD6;       /* window background: cabinet grey */
   --panel: #F5F6F2;         /* group-box face */
-  --panel-2: #ECEEE8;       /* sunken areas inside a panel */
-  --rule: #C3C7BF;          /* lines between things */
-  --rule-strong: #9EA39A;
-  --ink: #1D2124;
+  --panel-2: #ECEEE8;       /* sunken areas and hover */
+  --rule: #DCDFD8;          /* lines inside a panel */
+  --rule-strong: #B3B8B1;   /* panel borders */
+  --ink: #1A1E21;
   --ink-2: #4A5157;         /* secondary text, still 600 weight */
-  --graphite: #23282C;      /* title bar, group tabs */
-  --graphite-ink: #F2F3EF;
+  --ink-3: #6B7277;
+  --graphite: #23282C;      /* title bar, key bar */
+  --graphite-2: #30363B;    /* keys and fields on graphite */
+  --graphite-line: #4A5258;
+  --graphite-ink: #EEF0EC;
+  --graphite-dim: #A3ABA8;
+  --tab: #2A3034;           /* group-box title tabs */
+  --tab-ink: #F2F3EF;
   --signal: #F2B705;        /* status band and engineer accents only */
-  --signal-ink: #1D1A10;
+  --signal-ink: #1A1A1A;
   --data: #1F5AA6;          /* every chart line */
-  --data-fill: rgba(31, 90, 166, .12);
-  --ok: #24873F;
-  --warn: #E09A00;
-  --bad: #C8102E;
-  --ok-soft: #DCEBDD;
-  --warn-soft: #F7E7C2;
-  --bad-soft: #F3D3D7;
-  --bone: #E9E6DC;          /* Stop line key: ink on bone */
-  --key: #FBFBF8;
-  --key-edge: #A9AEA5;
-  --feed: #111416;
-  --shadow: 0 1px 0 rgba(0, 0, 0, .08);
+  --data-fill: rgba(31, 90, 166, .10);
+  --sel: #DCE5F1;
+  --ok: #24873F;   --ok-ink: #1D6E33;   --ok-soft: #E0EEE2;
+  --warn: #E09A00; --warn-ink: #875A00; --warn-soft: #FAEFD2;
+  --bad: #C8102E;  --bad-ink: #A30D25;  --bad-soft: #F7E0E3;
+  --idle: #5F676C; --idle-soft: #E4E6E1;
+  --bone: #EEF0EC;          /* Stop line key: ink on bone */
+  --key: #F5F6F2;
+  --key-edge: #B3B8B1;
+  --feed: #0B0D0E;
 
-  --f-ui: Barlow, -apple-system, "Helvetica Neue", sans-serif;
-  --f-num: "Barlow Semi Condensed", Barlow, sans-serif;
-  --f-mono: "Roboto Mono", ui-monospace, Menlo, monospace;
+  --f-ui: Barlow, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --f-num: "Barlow Semi Condensed", Barlow, "Arial Narrow", Arial, sans-serif;
+  --f-mono: "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --cabinet: #15181A;
-    --panel: #1E2326;
-    --panel-2: #191D20;
-    --rule: #343B40;
-    --rule-strong: #4C555B;
-    --ink: #E8EAE5;
-    --ink-2: #A9B0B4;
-    --graphite: #0C0E10;
+    --cabinet: #111315;
+    --panel: #1B1E21;
+    --panel-2: #22262A;
+    --rule: #2A2F33;
+    --rule-strong: #3A4045;
+    --ink: #E7E9E5;
+    --ink-2: #A9AFAC;
+    --ink-3: #858C89;
+    --graphite: #0A0C0D;
+    --graphite-2: #1F2427;
+    --graphite-line: #3A4146;
     --graphite-ink: #EEF0EC;
-    --data: #5B93DD;
-    --data-fill: rgba(91, 147, 221, .16);
-    --ok: #3FA65B;
-    --warn: #F0A818;
-    --bad: #E5384F;
-    --ok-soft: #1E3A26;
-    --warn-soft: #3D3016;
-    --bad-soft: #45202A;
-    --bone: #D8D4C8;
-    --key: #2A3034;
-    --key-edge: #4C555B;
-    --feed: #000;
+    --graphite-dim: #8E9693;
+    --tab: #3B4247;
+    --tab-ink: #F2F3EF;
+    --data: #7FAAE6;
+    --data-fill: rgba(127, 170, 230, .12);
+    --sel: #1F2D42;
+    --ok: #2E9E4D;   --ok-ink: #62CC80;   --ok-soft: #142A1B;
+    --warn: #E8A512; --warn-ink: #F2C04F; --warn-soft: #2C2410;
+    --bad: #DB2A44;  --bad-ink: #F37A8A;  --bad-soft: #33161B;
+    --idle: #7A8287; --idle-soft: #24282B;
+    --key: #1B1E21;
+    --key-edge: #3A4045;
     color-scheme: dark;
   }
 }
+
+/* state colours used by chips, lamps and andon blocks */
+.st-ok    { --c: var(--ok);   --cb: var(--ok-soft);   --ci: var(--ok-ink); }
+.st-amber { --c: var(--warn); --cb: var(--warn-soft); --ci: var(--warn-ink); }
+.st-red   { --c: var(--bad);  --cb: var(--bad-soft);  --ci: var(--bad-ink); }
+.st-none  { --c: var(--idle); --cb: var(--idle-soft); --ci: var(--ink-2); }
+.st-info  { --c: var(--data); --cb: var(--sel);       --ci: var(--ink); }

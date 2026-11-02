@@ -45,6 +45,7 @@ N.uiTop = (() => {
     const busy = S.source === 'live' || st === 'lost' || st === 'connecting';
     $('btnConnect').textContent = busy ? 'Disconnect' : 'Connect';
     $('btnConnect').disabled = !busy && !$('portSelect').value;
+    $('btnConnect').classList.toggle('on', busy);
     $('btnDemo').textContent = S.source === 'demo' ? 'Stop demo' : 'Demo data';
     $('btnDemo').classList.toggle('on', S.source === 'demo');
     $('btnStopLine').disabled = S.source === 'none';
