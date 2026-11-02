@@ -18,6 +18,7 @@ N.DEFAULTS = {
     hold: null,          // threshold overrides; null = use the model's own
     reject: null,
     demoUsesAI: false,   // Demo data, but photos go to the real vision service (test the AI without the line)
+    auto8d: 2,           // after this many damaged washers are pushed off, the agent drafts the damage 8D (0 = off)
     startVision: '~/Downloads/NAZAR/11-Onsite-Build/nazar-vision/Start Vision.command',
     startAgent: '~/Downloads/NAZAR/11-Onsite-Build/nazar-agent/Start Agent.command',
   },
@@ -40,6 +41,7 @@ N.S = {
   totals: { parts: 0, rej: 0, espParts: null, espRej: null, partTimes: [], lastPartAt: 0 },
   inspections: [],       // contract §6 rows: {at, n, verdict, score, ms, v, ma, vib, vpk, lux, temp}
   lastInsp: null,        // last inspection incl. crop / heatmap for the panel
+  rejectShots: [],       // rejected washers with damage: {n, at, score, damage, crop, heatmap} (for the 8D evidence)
   held: null,            // part held under the camera: {n, crop, heatmap, score}
   stopRequested: false,  // operator pressed Stop line (re-sent if the board reboots)
   ai: { state: 'unknown', model: '', hold: null, reject: null, ms: null, checkedAt: 0 },
@@ -75,7 +77,7 @@ N.store = (() => {
     const S = N.S;
     S.tel = null; S.telAt = 0; S.hist = []; S.lastSeen = {};
     S.totals = { parts: 0, rej: 0, espParts: null, espRej: null, partTimes: [], lastPartAt: 0 };
-    S.inspections = []; S.lastInsp = null; S.held = null; S.stopRequested = false;
+    S.inspections = []; S.lastInsp = null; S.rejectShots = []; S.held = null; S.stopRequested = false;
     S.link.fw = ''; S.link.sensors = null; S.link.cfg = null; S.link.linkOk = false; S.link.lines = 0; S.link.rate = 0;
     N.emit('reset');
   }
@@ -126,7 +128,7 @@ N.store = (() => {
   function resetCounts() {
     const T = N.S.totals;
     T.parts = 0; T.rej = 0; T.partTimes = []; T.lastPartAt = 0;
-    N.S.inspections = []; N.S.lastInsp = null;
+    N.S.inspections = []; N.S.lastInsp = null; N.S.rejectShots = [];
     N.emit('counts-reset');
   }
 

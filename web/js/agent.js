@@ -17,14 +17,16 @@ N.agent = (() => {
 
   const realRows = () => S.inspections.filter(r => r.verdict === 'PASS' || r.verdict === 'HOLD' || r.verdict === 'REJECT');
 
-  function requestBody() {
+  function requestBody(focus) {
     const L = S.settings.limits;
     const body = {
       lang: 'en', use_llm: true, source: S.source === 'demo' ? 'demo' : 'live',
       limits: { vib: { amber: L.vib.amber, red: L.vib.red }, lux: { amber: L.lux.amber, red: L.lux.red },
         temp: { amber: L.temp.amber, red: L.temp.red }, ma: { amber: L.ma.amber, red: L.ma.red } },
-      inspections: realRows().map(r => ({ at: r.at, n: r.n, verdict: r.verdict, score: r.score, vib: r.vib, vpk: r.vpk, lux: r.lux, temp: r.temp, ma: r.ma, v: r.v })),
+      inspections: realRows().map(r => ({ at: r.at, n: r.n, verdict: r.verdict, score: r.score, vib: r.vib, vpk: r.vpk, lux: r.lux, temp: r.temp, ma: r.ma, v: r.v,
+        ...(r.damage ? { damage: r.damage } : {}) })),
     };
+    if (focus) body.focus = focus;
     if (S.settings.fix.at) { body.fix_at = S.settings.fix.at; body.fix_note = S.settings.fix.note || 'fix applied'; }
     return body;
   }
@@ -38,12 +40,12 @@ N.agent = (() => {
   }
   function close() { $('agent').hidden = true; }
 
-  async function draft() {
+  async function draft(focus) {
     if (busy) return;
     busy = true; t0 = Date.now();
     showWaiting();
     waitTimer = setInterval(showWaiting, 1000);
-    const body = requestBody();
+    const body = requestBody(typeof focus === 'string' ? focus : '');
     const url = S.settings.ai.agentUrl.replace(/\/+$/, '') + '/report';
     let res = null;
     try {
@@ -59,9 +61,31 @@ N.agent = (() => {
     clearInterval(waitTimer);
     busy = false;
     report = { ...res, nAtDraft: body.inspections.length, at: Date.now(), approved: null };
-    if (!res.failed) N.event('info', `8D report drafted from ${body.inspections.length} inspections${res.local ? ' (console template, demo)' : ''}.`);
+    if (!res.failed) N.event('info', `8D report drafted from ${body.inspections.length} inspections${res.local ? ' (console template, demo)' : ''}${res.focus === 'damage' ? ', about the damaged washers' : ''}.`);
     render();
   }
+
+  // ---------------- automatic damage report ----------------
+  // When the Nth damaged washer (settings ai.auto8d, 0 = off) has been pushed off by the gate, open the agent and
+  // draft the 8D about the damage by itself. If the gate message never comes (continuous mode), 6 s after the verdict.
+  let autoN = null, autoTimer = 0, autoDone = false;
+  const damagedRejects = () => S.inspections.filter(r => r.verdict === 'REJECT' && r.damage).length;
+  function autoDraft() {
+    clearTimeout(autoTimer); autoTimer = 0; autoN = null; autoDone = true;
+    N.event('info', `${damagedRejects()} damaged washers pushed off. The NAZAR Agent is writing the 8D report about the damage.`);
+    $('agent').hidden = false;
+    draft('damage');
+  }
+  N.on('inspection', row => {
+    const want = +S.settings.ai.auto8d || 0;
+    if (!want || autoDone || row.verdict !== 'REJECT' || !row.damage || damagedRejects() < want) return;
+    autoN = row.n;
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(autoDraft, 6000);
+  });
+  N.on('msg:gate', m => {
+    if (autoN != null && m.n === autoN) { clearTimeout(autoTimer); autoTimer = setTimeout(autoDraft, 1500); }   // let the kick be seen first
+  });
 
   function showWaiting() {
     const s = Math.round((Date.now() - t0) / 1000);
@@ -95,7 +119,7 @@ N.agent = (() => {
       return;
     }
     const writer = report.local ? 'console template (demo, agent offline)' : report.writer === 'llm' ? 'local AI model' : 'template';
-    $('agState').textContent = `${report.stats ? report.stats.n : 0} inspections · written by ${writer}${report.ms ? ' in ' + fmt(report.ms / 1000, 0) + ' s' : ''}`;
+    $('agState').textContent = `${report.stats ? report.stats.n : 0} inspections${report.focus === 'damage' ? ' · damage report' : ''} · written by ${writer}${report.ms ? ' in ' + fmt(report.ms / 1000, 0) + ' s' : ''}`;
     if (report.enough === false || !report.report) {
       box.append(el('div', { class: 'wait' }, el('div', {}, el('b', { text: 'Not enough inspections yet' }),
         report.message || 'At least 20 inspected parts are needed. Keep the line running, then Draft again.')));
@@ -108,7 +132,23 @@ N.agent = (() => {
       }
       if (report.approved) box.append(el('div', { class: 'stamp', text: `APPROVED ${new Date(report.approved).toLocaleString('en-GB')}` }));
     }
+    if (report.damaged && report.damaged.length) damageCards(ev, report.damaged);
     if (report.stats) evidence(ev, report.stats);
+  }
+
+  /** The damaged washers the report is about: heatmap photo, what, where, score. */
+  function damageCards(ev, list) {
+    const box = el('div', { class: 'dmgcards' });
+    for (const d of list) {
+      const shot = S.rejectShots.find(s => s.n === d.n && s.at === d.at) || S.rejectShots.find(s => s.n === d.n);
+      const pic = shot && (shot.heatmap || shot.crop);
+      box.append(el('figure', {},
+        pic ? el('img', { src: `data:image/png;base64,${pic}`, alt: `washer ${d.n}` }) : el('div', { class: 'nopic', text: 'no photo' }),
+        el('figcaption', {}, el('b', { text: `Washer ${d.n} · ${d.label || d.kind}${d.spots > 1 ? ' ×' + d.spots : ''}` }),
+          el('span', { text: `${d.where}${d.area_pct != null ? ' · ' + fmt(d.area_pct, 1) + ' % of face' : ''}` }),
+          el('span', { text: `AI score ${fmt(d.score, 2)}${d.at ? ' · ' + hms(d.at) : ''}` }))));
+    }
+    ev.append(el('div', {}, el('h4', { text: 'Rejected washers (red = where the AI saw damage)' }), box));
   }
 
   function evidence(ev, st) {
@@ -265,6 +305,11 @@ N.agent = (() => {
     const cv = document.querySelector('#agEvidence canvas');
     const chart = cv ? `<img src="${cv.toDataURL('image/png')}" style="width:100%;max-width:720px;border:1px solid #ccc">` : '';
     const strata = (st.strata || []).map(s => `<tr${s.factor === st.cause ? ' style="background:#f7e7c2"' : ''}><td>${esc(s.label)}</td><td>${s.high_bad}/${s.high_n}</td><td>${s.low_bad}/${s.low_n}</td><td>${s.ratio == null ? '—' : fmt(s.ratio, 1) + '×'}</td><td>${s.p_value == null ? '—' : fmt(s.p_value, 4)}</td></tr>`).join('');
+    const damaged = (report.damaged || []).map(d => {
+      const shot = S.rejectShots.find(s => s.n === d.n && s.at === d.at) || S.rejectShots.find(s => s.n === d.n);
+      const pic = shot && (shot.heatmap || shot.crop);
+      return `<figure style="display:inline-block;margin:0 12px 12px 0;width:220px;vertical-align:top">${pic ? `<img src="data:image/png;base64,${pic}" style="width:220px;border:1px solid #ccc">` : ''}<figcaption><strong>Washer ${esc(d.n)}: ${esc(d.label || d.kind)}${d.spots > 1 ? ' ×' + esc(d.spots) : ''}</strong><br>${esc(d.where)}${d.area_pct != null ? ' · ' + fmt(d.area_pct, 1) + ' % of face' : ''}<br>AI score ${fmt(d.score, 2)}</figcaption></figure>`;
+    }).join('');
     const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>${esc(R.title)}</title>
 <style>body{font:15px/1.55 -apple-system,Helvetica,sans-serif;max-width:900px;margin:30px auto;padding:0 20px;color:#1d2124}
 h1{font-size:28px;margin:0 0 4px}.mast{border-bottom:3px solid #23282C;padding-bottom:6px;margin-bottom:16px;font-weight:700}
@@ -273,7 +318,7 @@ table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #ccc;pad
 .stamp{display:inline-block;border:3px solid #24873F;color:#24873F;padding:4px 10px;font-weight:700}</style></head><body>
 <div class="mast">NAZAR · Team Parakh · 8D report · ${new Date(report.at).toLocaleString('en-GB')}${S.source === 'demo' ? ' · DEMO DATA' : ''}</div>
 <h1>${esc(R.title)}</h1><p><strong>${esc(R.summary)}</strong></p>
-<p>${st.n} inspections, ${st.bad} bad (${fmt((st.rate || 0) * 100, 1)} %).</p>${chart}
+<p>${st.n} inspections, ${st.bad} bad (${fmt((st.rate || 0) * 100, 1)} %).</p>${damaged ? `<h3>Rejected washers</h3><div>${damaged}</div>` : ''}${chart}
 <table><tr><th>Machine state</th><th>Past amber</th><th>Normal</th><th>Ratio</th><th>p-value</th></tr>${strata}</table>
 ${(R.sections || []).map(s => `<section><h3><b>${esc(s.id)}</b>${esc(s.title)}</h3>${String(s.body || '').split(/\n{2,}/).map(p => `<p>${esc(p)}</p>`).join('')}</section>`).join('')}
 ${report.approved ? `<p class="stamp">APPROVED ${new Date(report.approved).toLocaleString('en-GB')}</p>` : '<p>Draft, not approved.</p>'}
@@ -289,7 +334,8 @@ ${report.approved ? `<p class="stamp">APPROVED ${new Date(report.approved).toLoc
     $('agApprove').addEventListener('click', approve);
     $('agSave').addEventListener('click', saveHTML);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('agent').hidden) close(); });
-    N.on('reset', () => { report = null; });
+    N.on('reset', () => { report = null; autoDone = false; autoN = null; clearTimeout(autoTimer); });
+    N.on('counts-reset', () => { autoDone = false; autoN = null; clearTimeout(autoTimer); });
   }
 
   return { init, open, draft, localStats };

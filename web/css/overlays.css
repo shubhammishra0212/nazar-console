@@ -93,6 +93,12 @@
 .kpis small { display: block; font-size: 13px; color: var(--ink-2); }
 .kpis b { font-family: var(--f-num); font-weight: 700; font-size: 28px; }
 .evidence canvas { width: 100%; height: 200px; display: block; background: var(--panel); border: 1px solid var(--rule); }
+.dmgcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.dmgcards figure { margin: 0; background: var(--panel); }
+.dmgcards img, .dmgcards .nopic { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--panel-2); }
+.dmgcards .nopic { display: grid; place-items: center; color: var(--ink-2); font-weight: 600; }
+.dmgcards figcaption { padding: 6px 8px 8px; display: flex; flex-direction: column; gap: 2px; font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.dmgcards figcaption b { font-family: var(--f-num); font-weight: 700; font-size: 16px; color: var(--bad); }
 .strata { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--panel); border: 1px solid var(--rule); }
 .strata th { text-align: left; font-family: var(--f-num); font-weight: 700; padding: 6px 8px; border-bottom: 2px solid var(--graphite); font-size: 14px; }
 .strata td { padding: 6px 8px; border-bottom: 1px solid var(--rule); font-family: var(--f-mono); font-weight: 500; font-size: 13px; }

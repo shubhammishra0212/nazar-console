@@ -100,6 +100,8 @@
 .verdict.v-HOLD b { background: var(--warn); color: #1D1400; border-color: var(--warn); }
 .verdict.v-REJECT b { background: var(--bad); color: #fff; border-color: var(--bad); }
 .verdict small { font-size: 13.5px; font-weight: 600; color: var(--ink-2); line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.verdict small .dmg { font-weight: 700; color: var(--ink); }
+.verdict.v-REJECT small .dmg { color: var(--bad); }
 .thumbs { grid-area: t; display: flex; gap: 1px; background: var(--rule); align-self: start; }
 .thumbs figure { margin: 0; text-align: center; background: var(--panel); }
 .thumbs img { width: 80px; height: 80px; object-fit: cover; background: var(--feed); display: block; }

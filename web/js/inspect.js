@@ -116,15 +116,23 @@ N.inspect = (() => {
     else if (cmd && done.has(n)) N.event('amber', `Verdict for part ${n} came after the belt had moved on; not sent.`);
 
     const t = tel || {};
+    const dmg = r.damage ? { kind: r.damage.kind, label: r.damage.label, spots: r.damage.spots, where: r.damage.where,
+      zone: r.damage.zone, clock: r.damage.clock, area_pct: r.damage.area_pct, match: r.damage.match } : null;
     const row = { at, n, verdict, score: r.score ?? null, ms: r.ms ?? null, v: t.v ?? null, ma: t.ma ?? null, vib: t.vib ?? null,
-      vpk: t.vpk ?? null, lux: t.lux ?? null, temp: t.temp ?? null };
+      vpk: t.vpk ?? null, lux: t.lux ?? null, temp: t.temp ?? null, damage: dmg };
     S.inspections.push(row);
     if (S.inspections.length > 20000) S.inspections.shift();
-    S.lastInsp = { ...row, crop: r.crop || null, heatmap: r.heatmap || null, hold: r.hold ?? null, reject: r.reject ?? null, real };
+    S.lastInsp = { ...row, crop: r.crop || null, heatmap: r.heatmap || null, hold: r.hold ?? null, reject: r.reject ?? null, real,
+      damageText: r.damage ? r.damage.text : '' };
+    if (verdict === 'REJECT' && dmg) {
+      S.rejectShots.push({ n, at, score: r.score, damage: r.damage, crop: r.crop || null, heatmap: r.heatmap || null });
+      if (S.rejectShots.length > 24) S.rejectShots.shift();
+    }
 
+    const what = r.damage ? ` ${r.damage.text}.` : '';
     if (verdict === 'HOLD') S.held = { n, crop: r.crop, heatmap: r.heatmap, score: r.score };
-    if (verdict === 'REJECT') N.event('red', `Part ${n}: REJECT (score ${fmt(r.score, 2)}). The gate will push it off.`);
-    else if (verdict === 'HOLD') N.event('amber', `Part ${n}: HOLD (score ${fmt(r.score, 2)}). The line waits for a person to check it.`);
+    if (verdict === 'REJECT') N.event('red', `Part ${n}: REJECT (score ${fmt(r.score, 2)}).${what} The gate will push it off.`);
+    else if (verdict === 'HOLD') N.event('amber', `Part ${n}: HOLD (score ${fmt(r.score, 2)}).${what} The line waits for a person to check it.`);
     else if (!real) N.event(verdict === 'NO_PART' ? 'info' : 'amber', `Part ${n}: not judged (${SKIP_TEXT[verdict] || verdict}). Sent PASS so the line keeps moving.`);
     if (current && current.n === n && kind === 'flow') current = null;
     N.emit('inspection', row);

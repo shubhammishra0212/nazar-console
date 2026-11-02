@@ -32,6 +32,7 @@ N.uiInspect = (() => {
       $('vMeta').innerHTML = '';
       $('vMeta').append(`Part ${li.n} · ${hms(li.at)}`, el('br'),
         li.real ? `${li.ms != null ? li.ms + ' ms' : ''}` : 'Sent PASS, line moves on');
+      if (li.damageText) $('vMeta').append(el('br'), el('span', { class: 'dmg', text: li.damageText }));
       if (li.crop) $('vCrop').src = img(li.crop); else $('vCrop').removeAttribute('src');
       if (li.heatmap) $('vHeat').src = img(li.heatmap); else $('vHeat').removeAttribute('src');
       const hold = li.hold ?? S.ai.hold ?? 0.33, rej = li.reject ?? S.ai.reject ?? 0.44;
