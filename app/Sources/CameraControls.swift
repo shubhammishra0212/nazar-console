@@ -55,7 +55,9 @@ enum CameraControls {
         guard CMIOObjectHasProperty(obj, &a) else { return nil }
         var v = initial
         var used: UInt32 = 0
-        let ok = CMIOObjectGetPropertyData(obj, &a, 0, nil, UInt32(MemoryLayout<T>.size), &used, &v) == 0
+        let ok = withUnsafeMutableBytes(of: &v) { buf in
+            CMIOObjectGetPropertyData(obj, &a, 0, nil, UInt32(buf.count), &used, buf.baseAddress!) == 0
+        }
         return ok ? v : nil
     }
 
@@ -69,7 +71,9 @@ enum CameraControls {
     private static func write<T>(_ obj: CMIOObjectID, _ selector: Int, _ value: T) -> Bool {
         var a = address(selector)
         var v = value
-        return CMIOObjectSetPropertyData(obj, &a, 0, nil, UInt32(MemoryLayout<T>.size), &v) == 0
+        return withUnsafeBytes(of: &v) { buf in
+            CMIOObjectSetPropertyData(obj, &a, 0, nil, UInt32(buf.count), buf.baseAddress!) == 0
+        }
     }
 
     /// The CMIO device for a getUserMedia label such as "C270 HD WEBCAM" (labels sometimes carry a "(046d:0825)" tail).
