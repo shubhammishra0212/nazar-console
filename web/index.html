@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>NAZAR Console</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/panels.css">
+<link rel="stylesheet" href="css/overlays.css">
+</head>
+<body>
+
+<!-- ===== title bar ===== -->
+<header class="titlebar">
+  <div class="brand">
+    <span class="eye"><img src="img/eye.png" alt=""></span>
+    <b>NAZAR</b><span class="sep">|</span><span class="sub">Line console</span>
+  </div>
+  <div class="pill" id="pill"><i></i><span id="pillText">Not connected</span><code id="pillPort"></code></div>
+  <div class="grow"></div>
+  <label class="portpick">ESP32 port
+    <select id="portSelect"></select>
+  </label>
+  <button class="key dark" id="btnConnect">Connect</button>
+  <button class="key dark ghost" id="btnDemo">Demo data</button>
+  <button class="key stopkey" id="btnStopLine" title="Stops the belt from the app (sends STOP). Not an emergency stop.">Stop line</button>
+  <div class="clockbox"><small>Connected for</small><code id="connFor">--:--:--</code></div>
+  <div class="clockbox"><small>Time</small><code id="clock">--:--:--</code></div>
+</header>
+
+<!-- ===== status band ===== -->
+<div class="band" id="band"><div class="hatch"></div><b id="bandWord">NOT CONNECTED</b><span id="bandText">Pick the ESP32 port and press Connect, or press Demo data.</span></div>
+
+<!-- ===== main area ===== -->
+<main class="main">
+  <section class="leftcol">
+
+    <section class="group camera" id="cameraGroup">
+      <header><h2>Camera</h2>
+        <div class="tools">
+          <span class="meter" id="brightMeter" title="Share of pure-white pixels in the middle of the picture">Too bright <b id="brightPct">--</b></span>
+          <select id="camSelect" title="Camera"></select>
+          <button class="key small" id="btnCamSettings">Settings</button>
+          <button class="key small" id="btnSnapshot">Snapshot</button>
+          <button class="key small" id="btnCamPower">Turn off</button>
+        </div>
+      </header>
+      <div class="feed" id="feed" title="Click to enlarge">
+        <video id="video" autoplay playsinline muted></video>
+        <div class="feedmsg" id="feedMsg">Camera is starting…</div>
+        <button class="key closebig" id="btnFeedClose">Close</button>
+      </div>
+    </section>
+
+    <section class="group sensors">
+      <header><h2>Sensors</h2>
+        <div class="tools"><span class="hint">Click a sensor to enlarge</span></div>
+      </header>
+      <div class="tiles" id="tiles"></div>
+    </section>
+  </section>
+
+  <section class="rightcol">
+    <section class="group status">
+      <header><h2>Line status</h2><div class="tools"><span class="hint" id="andonFor"></span></div></header>
+      <div class="andon" id="andon"><span id="andonWord">NOT CONNECTED</span></div>
+      <div class="statusbody">
+        <h3 id="statusHead">No board connected</h3>
+        <ul class="steps" id="statusSteps"></ul>
+        <div class="held" id="heldBox" hidden>
+          <img id="heldCrop" alt=""><img id="heldHeat" alt="">
+          <div><b id="heldTitle">Part held</b><span id="heldScore"></span></div>
+        </div>
+        <div class="actions">
+          <button class="key go" id="btnResume" hidden>Resume production</button>
+          <button class="key go" id="btnStart" hidden>Start line</button>
+        </div>
+      </div>
+      <div class="counts">
+        <div><small>Parts counted</small><b id="cParts">0</b></div>
+        <div><small>Parts per minute</small><b id="cRate">0</b></div>
+        <div><small>Rejected</small><b><span id="cRej">0</span> <em id="cRejPct">0.0 %</em></b></div>
+        <div><small>Last part</small><b id="cLast">—</b></div>
+      </div>
+    </section>
+
+    <section class="group inspection" id="inspGroup">
+      <header><h2>Inspection</h2><div class="tools"><span class="aistate" id="aiState">AI offline</span><button class="key small" id="btnStartAI">Start AI</button></div></header>
+      <div class="insp">
+        <div class="verdict" id="vBlock"><b id="vWord">—</b><small id="vMeta">No part inspected yet</small></div>
+        <div class="thumbs"><figure><img id="vCrop" alt=""><figcaption>Part</figcaption></figure><figure><img id="vHeat" alt=""><figcaption>Heatmap</figcaption></figure></div>
+        <div class="scorebar"><div class="track"><i id="vFill"></i><s id="vHoldMark"></s><s id="vRejMark" class="r"></s></div><code id="vScore">score —</code></div>
+        <div class="strip" id="vStrip"></div>
+        <div class="vcounts"><span class="p">PASS <b id="nPass">0</b></span><span class="h">HOLD <b id="nHold">0</b></span><span class="x">REJECT <b id="nRej">0</b></span></div>
+      </div>
+    </section>
+
+    <section class="group events">
+      <header><h2>Events</h2><div class="tools"><button class="link" id="btnClearEvents">Clear</button></div></header>
+      <ol class="eventlist" id="events"></ol>
+    </section>
+  </section>
+</main>
+
+<!-- ===== bottom keys ===== -->
+<footer class="keybar">
+  <div class="readouts">
+    <span>Lines/s <code id="rRate">0.0</code></span>
+    <span>Last data <code id="rAge">—</code></span>
+    <span>Baud <code id="rBaud">115200</code></span>
+    <span>Firmware <code id="rFw">—</code></span>
+  </div>
+  <div class="grow"></div>
+  <button class="key" data-drawer="serial">Serial monitor</button>
+  <button class="key" data-drawer="limits">Limits</button>
+  <button class="key" data-drawer="ai">AI &amp; timing</button>
+  <button class="key" data-drawer="camera">Camera</button>
+  <button class="key" id="btnSaveCsv">Save CSV</button>
+  <button class="key" id="btnSaveInsp">Save inspections</button>
+  <button class="key" id="btnResetCounts">Reset counts</button>
+  <button class="key engineer" id="btnAgent">NAZAR Agent · 8D</button>
+</footer>
+
+<!-- ===== drawer ===== -->
+<aside class="drawer" id="drawer" hidden>
+  <header>
+    <nav id="drawerTabs">
+      <button data-tab="serial">Serial monitor</button>
+      <button data-tab="limits">Limits</button>
+      <button data-tab="ai">AI &amp; timing</button>
+      <button data-tab="camera">Camera</button>
+    </nav>
+    <button class="key small" id="btnDrawerClose">Close</button>
+  </header>
+  <div class="drawerbody">
+    <section data-pane="serial" class="pane serialpane">
+      <pre id="serialOut" class="serialout"></pre>
+      <div class="sendrow">
+        <input id="serialIn" placeholder="Type a command, e.g. PING, SET gate_ms 900" autocomplete="off" spellcheck="false">
+        <button class="key" id="btnSend">Send</button>
+        <button class="key" data-quick="PING">PING</button>
+        <button class="key" data-quick="REJECT">REJECT</button>
+        <button class="key" data-quick="HOLD">HOLD</button>
+        <button class="key" data-quick="RESUME">RESUME</button>
+        <label class="check"><input type="checkbox" id="serialFollow" checked> Follow</label>
+        <label class="check"><input type="checkbox" id="serialTel"> Show telemetry</label>
+      </div>
+    </section>
+    <section data-pane="limits" class="pane" id="limitsPane"></section>
+    <section data-pane="ai" class="pane" id="aiPane"></section>
+    <section data-pane="camera" class="pane" id="camPane"></section>
+  </div>
+</aside>
+
+<!-- ===== sensor detail ===== -->
+<div class="overlay" id="detail" hidden>
+  <section class="sheet detailsheet">
+    <header><h2 id="dTitle">Sensor</h2>
+      <div class="tools">
+        <div class="seg" id="dRanges"></div>
+        <button class="key small" id="dPause">Pause</button>
+        <button class="key small" id="dClose">Close</button>
+      </div>
+    </header>
+    <div class="dbody">
+      <canvas id="dChart"></canvas>
+      <div class="dside">
+        <div class="dnow"><small id="dNowLabel">Now</small><b id="dValue">—</b><span id="dState"></span></div>
+        <dl id="dStats"></dl>
+        <div class="dswitch" id="dSwitch"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===== NAZAR Agent 8D ===== -->
+<div class="overlay" id="agent" hidden>
+  <section class="sheet agentsheet">
+    <header><h2>NAZAR Agent · 8D report</h2>
+      <div class="tools">
+        <span class="hint" id="agState"></span>
+        <button class="key small" id="agFix">Mark fix applied</button>
+        <button class="key small" id="agDraft">Draft again</button>
+        <button class="key small" id="agApprove">Approve</button>
+        <button class="key small" id="agSave">Save HTML</button>
+        <button class="key small" id="agClose">Close</button>
+      </div>
+    </header>
+    <div class="agbody">
+      <article class="report" id="agReport"></article>
+      <aside class="evidence" id="agEvidence"></aside>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="js/util.js"></script>
+<script src="js/store.js"></script>
+<script src="js/bridge.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/link.js"></script>
+<script src="js/alarms.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/camera.js"></script>
+<script src="js/inspect.js"></script>
+<script src="js/csv.js"></script>
+<script src="js/ui-top.js"></script>
+<script src="js/ui-tiles.js"></script>
+<script src="js/ui-status.js"></script>
+<script src="js/ui-inspect.js"></script>
+<script src="js/ui-events.js"></script>
+<script src="js/ui-drawer.js"></script>
+<script src="js/agent.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
