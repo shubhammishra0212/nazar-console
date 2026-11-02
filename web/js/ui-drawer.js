@@ -201,8 +201,12 @@ N.uiDrawer = (() => {
 
   function renderCamera(cam) {
     const pane = $('camPane'); pane.innerHTML = '';
-    if (!camInfo || !camInfo.length) {
-      pane.append(el('p', { class: 'fnote', text: `${cam} has no picture settings the app can change.${/iriun/i.test(cam) ? ' Set exposure in the Iriun app on the phone.' : ''}` }));
+    const phone = N.camera.phoneOf(cam);
+    if (!camInfo || !camInfo.length || phone) {
+      pane.append(el('p', { class: 'fnote', text: phone
+        ? `${cam} is ${phone.name}. Its picture is set in ${phone.app}, not here. ${phone.help}`
+        : `${cam} has no picture settings the app can change.` }));
+      pane.append(el('p', { class: 'fnote', text: 'Watch the "Too bright" meter above the camera while you adjust: aim for 0 % with a washer in view.' }));
       return;
     }
     const expo = camInfo.find(c => c.key === 'exposure');

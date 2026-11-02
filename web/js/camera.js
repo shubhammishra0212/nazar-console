@@ -16,15 +16,53 @@ N.camera = (() => {
   const video = () => $('video');
   const msg = text => { $('feedMsg').textContent = text || ''; $('feedMsg').hidden = !text; };
 
+  // Phone cameras reach the Mac as virtual webcams through a phone app. They are listed first (the iPhone is the
+  // line camera), Camo before the others. Their picture settings live in that app, not in the Mac's camera controls.
+  const PHONES = [
+    { kind: 'camo', test: /camo/i, name: 'iPhone via Camo', app: 'Camo Studio on the Mac',
+      help: 'Set the picture in Camo Studio on the Mac: Adjust › Exposure (lock it, then lower it until the meter shows 0 %), lock focus on the washer, and pick 1080p. Keep Camo Studio open while NAZAR runs.' },
+    { kind: 'continuity', test: /iphone|continuity/i, name: 'iPhone (Continuity Camera)', app: 'the iPhone',
+      help: 'Continuity Camera sets exposure by itself. For a fixed picture use Camo or a USB camera.' },
+    { kind: 'iriun', test: /iriun/i, name: 'phone via Iriun', app: 'the Iriun app on the phone',
+      help: 'Set exposure in the Iriun app on the phone.' },
+  ];
+  const phoneOf = lbl => PHONES.find(p => p.test.test(lbl || '')) || null;
+  const rank = d => { const i = PHONES.findIndex(p => p.test.test(d.label || '')); return i < 0 ? PHONES.length : i; };
+  const optionText = d => { const p = phoneOf(d.label); return p ? `${d.label} — ${p.name}` : (d.label || 'Camera'); };
+  /** The camera to use when none was picked yet: Camo first, then other phone cameras, then the first webcam. */
+  const preferred = () => devices.slice().sort((a, b) => rank(a) - rank(b))[0];
+  /** The saved camera, unless it is a phone camera and a better one (Camo) is present. A chosen USB webcam is kept. */
+  function choose() {
+    const saved = devices.find(d => d.label === S.settings.camera), best = preferred();
+    if (saved && (!phoneOf(saved.label) || !best || rank(saved) <= rank(best))) return saved;
+    return best;
+  }
+
   async function listDevices() {
     try {
       devices = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
     } catch (e) { devices = []; }
+    devices.sort((a, b) => rank(a) - rank(b));
     const sel = $('camSelect');
     sel.innerHTML = '';
-    for (const d of devices) sel.append(new Option(d.label || 'Camera', d.deviceId));
+    for (const d of devices) sel.append(new Option(optionText(d), d.deviceId));
     if (S.source === 'demo' || !devices.length) sel.append(new Option('Demo camera (drawn)', DEMO_ID));
     if (currentId) sel.value = currentId;
+  }
+
+  /** A camera appeared or went away (Camo connects the iPhone, a USB camera is plugged in or out). */
+  async function devicesChanged() {
+    const before = new Set(devices.map(d => d.deviceId));
+    await listDevices();
+    if (S.settings.camOff || window.__NAZAR_NO_CAMERA) return;
+    const camo = devices.find(d => /camo/i.test(d.label) && !before.has(d.deviceId));
+    const live = stream && stream.getVideoTracks().some(t => t.readyState === 'live');
+    // Camo just came up: switch to it unless a USB webcam the operator picked is running
+    const onPhoneOrNothing = !live || currentId === DEMO_ID || !!phoneOf(label);
+    if (camo && onPhoneOrNothing) {
+      N.event('info', `${camo.label} appeared — switching the camera to it.`);
+      start(camo.deviceId);
+    }
   }
 
   async function start(deviceId) {
@@ -36,9 +74,11 @@ N.camera = (() => {
     }
     msg('Camera is starting…');
     try {
-      const want = deviceId || (devices.find(d => d.label === S.settings.camera) || {}).deviceId;
+      await listDevices();   // fresh list: a phone camera may have come or gone since the last look
+      const want = deviceId || (choose() || {}).deviceId;
+      // 1080p: phone cameras (Camo, Continuity) deliver it and the AI was trained on 1920-px photos
       stream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: want ? { exact: want } : undefined, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false,
+        video: { deviceId: want ? { exact: want } : undefined, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false,
       });
       const track = stream.getVideoTracks()[0];
       label = track.label || 'Camera';
@@ -46,7 +86,12 @@ N.camera = (() => {
       video().srcObject = stream;
       msg('');
       S.settings.camera = label; S.settings.camOff = false; N.store.saveSettings();
-      track.addEventListener('ended', () => { msg('The camera was unplugged or taken by another app.'); N.event('amber', `Camera ${label} stopped.`); });
+      track.addEventListener('ended', () => {
+        const p = phoneOf(label);
+        msg(p ? `${label} stopped. Check that the phone is connected and ${p.app} is open; NAZAR switches back to it when it returns.`
+          : 'The camera was unplugged or taken by another app.');
+        N.event('amber', `Camera ${label} stopped.`);
+      });
       await listDevices();
       N.event('info', `Camera on: ${label}`);
       setTimeout(() => applySaved(label), 800);   // after the stream starts (starting can reset exposure)
@@ -176,7 +221,7 @@ N.camera = (() => {
     $('btnCamPower').addEventListener('click', () => (stream ? stop() : start(currentId)));
     $('camSelect').addEventListener('change', e => start(e.target.value));
     if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
-      navigator.mediaDevices.addEventListener('devicechange', listDevices);
+      navigator.mediaDevices.addEventListener('devicechange', devicesChanged);
     }
     N.on('link', () => {
       // demo camera only with demo data; a real camera is kept whatever the source
@@ -188,5 +233,5 @@ N.camera = (() => {
     if (S.settings.camOff) { stop(); listDevices(); } else start();
   }
 
-  return { init, start, stop, grabFrame, snapshot, applySaved, get label() { return label; }, get on() { return !!stream; }, DEMO_ID };
+  return { init, start, stop, grabFrame, snapshot, applySaved, phoneOf, get label() { return label; }, get on() { return !!stream; }, DEMO_ID };
 })();

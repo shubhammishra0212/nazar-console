@@ -41,6 +41,12 @@ permission across rebuilds. On a teammate's Mac: right-click the app › Open �
 No hardware? Press **Demo data**: a pretend board in the page speaks the same protocol, with a drawn demo camera and
 made-up verdicts. A yellow band says DEMO DATA the whole time and demo readings are never mixed with real ones.
 
+## iPhone as the line camera (Camo)
+
+The iPhone reaches the Mac as a virtual webcam through **Camo Studio** (works with an iPhone on a different Apple ID). NAZAR lists phone cameras first (Camo, then Continuity Camera, then Iriun), picks Camo by itself when no USB webcam was chosen, and switches to Camo the moment it appears. Camo's picture (exposure, focus lock, 1080p) is set in Camo Studio on the Mac, not in NAZAR's camera Settings; watch NAZAR's "Too bright" meter while you adjust and aim for 0 %.
+
+Setup once: open Camo Studio, allow its camera extension (System Settings › General › Login Items & Extensions › Camera Extensions), open Camo on the iPhone and connect it by USB or Wi-Fi. "Camo" then shows in NAZAR's camera picker.
+
 ## Test without hardware
 
 ```bash
