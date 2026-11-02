@@ -138,7 +138,7 @@ N.inspect = (() => {
   function fake(tel) {
     const shaking = tel && tel.vib >= S.settings.limits.vib.amber;
     const u = Math.random();
-    const pR = shaking ? 0.34 : 0.03, pH = shaking ? 0.12 : 0.07;
+    const pR = shaking ? 0.22 : 0.02, pH = shaking ? 0.10 : 0.07;
     const verdict = u < pR ? 'REJECT' : u < pR + pH ? 'HOLD' : 'PASS';
     const score = verdict === 'REJECT' ? 0.46 + Math.random() * 0.3 : verdict === 'HOLD' ? 0.34 + Math.random() * 0.09 : 0.1 + Math.random() * 0.19;
     return { ok: true, verdict, score: +score.toFixed(3), hold: 0.33, reject: 0.44, ms: Math.round(45 + Math.random() * 20),

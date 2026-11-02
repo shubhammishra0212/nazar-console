@@ -73,7 +73,7 @@
 .dswitch .key { width: 100%; }
 
 /* NAZAR Agent */
-.agentsheet { width: min(1500px, 100%); height: 100%; }
+.agentsheet { width: min(1500px, 100%); height: calc(100vh - 52px); }
 .agbody { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(380px, 1fr); }
 .report { overflow: auto; padding: 20px 26px; user-select: text; -webkit-user-select: text; font-weight: 500; font-size: 15px; line-height: 1.55; }
 .report h3 { font-family: var(--f-num); font-weight: 700; font-size: 26px; margin: 0 0 6px; line-height: 1.15; }

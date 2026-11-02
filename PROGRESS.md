@@ -16,12 +16,16 @@ Restarted agent: read this file and `git log` first, never redo finished work.
 - Web, written + `node --check` OK (not yet run in a browser): `web/index.html`, `web/css/{tokens,layout,panels,overlays}.css`,
   `web/js/{util,store,bridge,demo,link,alarms}.js`. Global namespace `N`, bus `N.on/N.emit`, state `N.S`.
 
+- All web JS written: util, store, bridge, demo, link, alarms, charts, camera, inspect, csv, ui-top, ui-tiles,
+  ui-status, ui-inspect, ui-events, ui-drawer, agent (English only), main. `node --check` OK.
+- Headless Chrome demo screenshots checked (1440x900 light+dark, 1920x1080 dark, agent view, limits drawer):
+  layout OK. Screenshot helper lives in the agent scratchpad (not in repo); command is in README later.
+- Inspection rows take v/ma/vib/vpk from the last RUNNING second before the stop (belt is off at the photo).
+
 ## In progress
-- `web/js/` remaining, in index.html load order: charts, camera, inspect, csv, ui-top, ui-tiles, ui-status,
-  ui-inspect, ui-events, ui-drawer, agent, main.
+- `tools/sim_board.py`, then native verification with the built app.
 
 ## Next
-1. `web/`: index.html, css/, fonts/, js modules (util, store, bridge, link, demo, alarms, charts, camera, inspect, ui-*, agent, csv, main).
 2. `tools/sim_board.py`.
 3. Verify: node --check, headless Chrome screenshots (1440x900, 1920x1080, dark), native serial with sim.
 4. README.md, docs/console.md → docs/NAZAR-04-Console-App.pdf (+ copy to ../PDFs/).

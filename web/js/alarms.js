@@ -108,6 +108,9 @@ N.alarms = (() => {
     return out.sort((a, b) => (b.sev === 'red') - (a.sev === 'red'));
   }
 
+  /** Steps when the first issue is already the headline: its step alone, then the other issues in full. */
+  const headFirst = iss => iss.map((i, k) => ({ cls: i.sev, text: k === 0 ? i.step : `${i.head} ${i.step}` }));
+
   function computeLine(now) {
     const L = { buttons: {} };
     const tel = S.tel;
@@ -135,7 +138,7 @@ N.alarms = (() => {
       L.steps = [{ cls: 'amber', text: 'Wait a few seconds: the ESP32 restarts when the port opens.' },
         { cls: '', text: 'Check the firmware is uploaded and the baud rate is 115200.' }];
     } else if (reds.length && mode !== 'HOLD') {
-      L.word = 'STOP & CHECK'; L.cls = 'a-red'; L.head = reds[0].head; L.steps = issueSteps;
+      L.word = 'STOP & CHECK'; L.cls = 'a-red'; L.head = reds[0].head; L.steps = headFirst(iss);
     } else if (mode === 'HOLD') {
       L.word = 'ON HOLD'; L.cls = 'a-hold';
       L.head = S.held ? `Line on hold: part ${S.held.n} is held for checking` : 'Line on hold';
@@ -147,7 +150,7 @@ N.alarms = (() => {
       L.steps = [{ cls: '', text: 'The belt is off. The part under the camera and the gate timing wait where they are.' },
         { cls: 'ok', text: 'Press Start line to run again.' }, ...issueSteps];
     } else if (iss.length) {
-      L.word = 'CHECK SOON'; L.cls = 'a-amber'; L.head = iss[0].head; L.steps = issueSteps;
+      L.word = 'CHECK SOON'; L.cls = 'a-amber'; L.head = iss[0].head; L.steps = headFirst(iss);
     } else if (mode === 'INSPECT') {
       L.word = 'INSPECTING'; L.cls = 'a-insp';
       L.head = `Part ${N.inspect ? N.inspect.currentPart() || '' : ''} is stopped under the camera`.replace('Part  ', 'A part ');
