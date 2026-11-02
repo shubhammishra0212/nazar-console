@@ -26,7 +26,7 @@ N.SENSORS = [
 N.alarms = (() => {
   const S = N.S;
   const st = {};                 // key -> {state, since, cand, candSince, value}
-  let line = { word: 'NOT CONNECTED', cls: 'a-none', since: Date.now() };
+  let line = { word: 'NOT CONNECTED', cls: 'a-none', since: Date.now(), head: 'No board connected', steps: [], buttons: {} };
 
   const SEVERITY = { red: 3, stopped: 3, amber: 2, none: 1, ok: 0, wait: 0 };
   const STATE_WORD = { ok: 'Normal', amber: 'High', red: 'Too high', stopped: 'Not running', none: 'No signal', wait: 'Waiting' };
@@ -66,7 +66,7 @@ N.alarms = (() => {
 
   function evaluate() {
     const now = Date.now();
-    if (S.source === 'none') return;
+    if (S.source === 'none') { computeLine(now); return; }
     const ref = S.link.openedAt || now;
     for (const s of N.SENSORS) {
       const x = st[s.key];

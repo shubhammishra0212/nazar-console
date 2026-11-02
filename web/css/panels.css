@@ -85,7 +85,7 @@
 /* ---------- inspection ---------- */
 .inspection { flex: none; }
 .insp {
-  display: grid; grid-template-columns: 1fr auto; grid-template-areas: "v t" "s t" "strip counts"; gap: 8px 14px; padding: 12px 18px;
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "v t" "s t" "f f"; gap: 8px 14px; padding: 12px 18px;
 }
 .aistate { font-size: 13px; padding-left: 8px; border-left: 4px solid var(--bad); }
 .aistate.ok { border-color: var(--ok); }
@@ -107,13 +107,14 @@
 .scorebar .track s { position: absolute; top: -5px; bottom: -5px; width: 3px; background: var(--warn); }
 .scorebar .track s.r { background: var(--bad); }
 .scorebar code { font-size: 13px; min-width: 88px; }
-.strip { grid-area: strip; display: flex; gap: 4px; align-items: center; }
+.footrow { grid-area: f; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.strip { display: flex; gap: 4px; align-items: center; }
 .strip i { width: 18px; height: 18px; background: var(--panel-2); border: 1px solid var(--rule); }
 .strip i.PASS { background: var(--ok); border-color: var(--ok); }
 .strip i.HOLD { background: var(--warn); border-color: var(--warn); }
 .strip i.REJECT { background: var(--bad); border-color: var(--bad); }
 .strip i.SKIP { background: transparent; border: 2px dashed var(--rule-strong); }
-.vcounts { grid-area: counts; display: flex; gap: 12px; font-size: 13px; align-items: center; justify-content: flex-end; }
+.vcounts { display: flex; gap: 12px; font-size: 13px; align-items: center; justify-content: flex-end; }
 .vcounts b { font-family: var(--f-num); font-weight: 700; font-size: 18px; margin-left: 3px; }
 .vcounts .p { color: var(--ok); } .vcounts .h { color: #A86F00; } .vcounts .x { color: var(--bad); }
 @media (prefers-color-scheme: dark) { .vcounts .h { color: var(--warn); } }
