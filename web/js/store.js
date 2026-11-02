@@ -17,6 +17,7 @@ N.DEFAULTS = {
     settleMs: 300,
     hold: null,          // threshold overrides; null = use the model's own
     reject: null,
+    demoUsesAI: false,   // Demo data, but photos go to the real vision service (test the AI without the line)
     startVision: '~/Downloads/NAZAR/11-Onsite-Build/nazar-vision/Start Vision.command',
     startAgent: '~/Downloads/NAZAR/11-Onsite-Build/nazar-agent/Start Agent.command',
   },

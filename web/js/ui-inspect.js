@@ -10,11 +10,11 @@ N.uiInspect = (() => {
 
   function renderAI() {
     const a = S.ai, box = $('aiState');
-    if (S.source === 'demo') { box.className = 'aistate demo'; box.textContent = 'Demo verdicts (no AI)'; }
+    if (S.source === 'demo' && !S.settings.ai.demoUsesAI) { box.className = 'aistate demo'; box.textContent = 'Demo verdicts (no AI)'; }
     else if (!S.settings.ai.on) { box.className = 'aistate'; box.textContent = 'AI switched off'; }
     else if (a.state === 'ready') { box.className = 'aistate ok'; box.textContent = `AI ready${a.ms != null ? ' · ' + a.ms + ' ms' : ''}`; }
     else { box.className = 'aistate'; box.textContent = 'AI offline — click Start AI'; }
-    $('btnStartAI').hidden = S.source === 'demo' || a.state === 'ready';
+    $('btnStartAI').hidden = (S.source === 'demo' && !S.settings.ai.demoUsesAI) || a.state === 'ready';
   }
 
   function render() {

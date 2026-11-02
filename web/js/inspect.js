@@ -49,10 +49,10 @@ N.inspect = (() => {
     const at = Date.now();
     const tel = snapshot(at);                     // sensors at the moment of the photo (contract §6), see snapshot()
     let result;
-    if (source === 'demo') {
+    if (source === 'demo' && !S.settings.ai.demoUsesAI) {
       await sleep(40 + Math.random() * 40);
       result = fake(tel);
-    } else {
+    } else {                                      // live, or Demo with "ask the real AI" ticked
       const blob = await N.camera.grabFrame();
       if (!blob) result = { skip: 'NO_CAMERA' };
       else result = await ask(blob);
@@ -169,7 +169,7 @@ N.inspect = (() => {
 
   // ---------- AI service health ----------
   async function health() {
-    if (S.source === 'demo') { S.ai = { ...S.ai, state: 'demo' }; N.emit('ai'); return; }
+    if (S.source === 'demo' && !S.settings.ai.demoUsesAI) { S.ai = { ...S.ai, state: 'demo' }; N.emit('ai'); return; }
     const t0 = performance.now();
     try {
       const r = await fetchT(vurl('/health'), {}, 1500);

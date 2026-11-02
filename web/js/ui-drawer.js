@@ -127,6 +127,9 @@ N.uiDrawer = (() => {
     const on = el('input', { type: 'checkbox' }); on.checked = !!A.on;
     on.addEventListener('change', () => { A.on = on.checked; N.store.saveSettings(); N.event('info', `AI inspection switched ${on.checked ? 'on' : 'off'}.`); N.emit('ai'); });
     ai.append(el('label', { class: 'check' }, on, 'Check every part with the AI (off: every part passes)'));
+    const dr = el('input', { type: 'checkbox' }); dr.checked = !!A.demoUsesAI;
+    dr.addEventListener('change', () => { A.demoUsesAI = dr.checked; N.store.saveSettings(); N.inspect.health(); N.emit('ai'); });
+    ai.append(el('label', { class: 'check' }, dr, 'In Demo data, send photos to the real AI service'));
     ai.append(numberRow('Settle before the photo', 'ms', A.settleMs, v => { A.settleMs = v ?? 300; N.store.saveSettings(); }));
     ai.append(numberRow('Hold above (empty = model)', '', A.hold, v => { A.hold = v; N.store.saveSettings(); }, '0.01'));
     ai.append(numberRow('Reject above (empty = model)', '', A.reject, v => { A.reject = v; N.store.saveSettings(); }, '0.01'));

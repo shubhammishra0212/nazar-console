@@ -1,6 +1,6 @@
 // main.js — start-up: load the saved settings, wire the screen, look for the last port, and start Demo data when the
 // page is opened as index.html?demo=1 (handy in a browser). For screenshots: &show=agent|limits|serial|ai|detail
-// opens that view after &after=<ms> (default 20000).
+// opens that view after &after=<ms> (default 20000). &realai=1 sends demo photos to the real vision service.
 'use strict';
 
 (() => {
@@ -27,6 +27,7 @@
   N.link.refreshPorts();
 
   const q = new URLSearchParams(location.search);
+  if (q.get('realai') === '1') N.S.settings.ai.demoUsesAI = true;   // test: demo board + real vision service
   if (q.get('demo') === '1') N.link.startDemo();
   const show = q.get('show');
   if (show) {
