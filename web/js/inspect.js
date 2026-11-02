@@ -48,7 +48,7 @@ N.inspect = (() => {
     if (S.source !== source) return;
 
     const at = Date.now();
-    const tel = S.tel ? { ...S.tel } : null;      // sensors at the moment of the photo (contract §6)
+    const tel = snapshot(at);                     // sensors at the moment of the photo (contract §6), see snapshot()
     let result;
     if (source === 'demo') {
       await sleep(40 + Math.random() * 40);
@@ -60,6 +60,27 @@ N.inspect = (() => {
     }
     if (S.source !== source) return;
     finish(n, kind, result, tel, at);
+  }
+
+  /** Sensor values for the inspection row. Light and temperature are taken at the photo. The belt is stopped at the
+   *  photo in stop-and-inspect mode, so motor current and shaking would always read "motor off"; for v, ma, vib and
+   *  vpk we take the median of the last second the belt was RUNNING before the stop (within 5 s). That is the state
+   *  the washer travelled in, and what the root-cause statistics need. */
+  function snapshot(at) {
+    if (!S.tel) return null;
+    const out = { ...S.tel };
+    const h = S.hist;
+    let end = -1;
+    for (let i = h.length - 1; i >= 0 && h[i].t > at - 5000; i--) if (h[i].belt === 1) { end = i; break; }
+    if (end >= 0) {
+      for (const k of ['v', 'ma', 'vib', 'vpk']) {
+        const vals = [];
+        for (let i = end; i >= 0 && h[i].t > h[end].t - 1000; i--) if (h[i].belt === 1 && typeof h[i][k] === 'number') vals.push(h[i][k]);
+        const m = N.util.median(vals);
+        if (m != null) out[k] = +m.toFixed(k === 'vib' || k === 'vpk' ? 4 : 2);
+      }
+    }
+    return out;
   }
 
   async function ask(blob) {

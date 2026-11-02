@@ -58,7 +58,7 @@ N.uiTiles = (() => {
     const L = S.settings.limits;
     switch (s.key) {
       case 'ma': return tel.v != null && tel.ma != null ? `${fmt(tel.v, 2)} V · ${fmt(tel.v * tel.ma / 1000, 2)} W` : 'INA219';
-      case 'vib': return tel.vpk != null ? `Peak ${fmt(tel.vpk, 3)} g · amber ${L.vib.amber}` : 'MPU-6050';
+      case 'vib': return tel.vpk != null ? `Peak ${fmt(tel.vpk, 3)} g` : 'MPU-6050';
       case 'temp': {
         const now = Date.now(), a = N.alarms.medianAt('temp', now - 55000, 5000), b = N.alarms.medianAt('temp', now, 5000);
         return a != null && b != null ? `${b - a >= 0 ? '+' : ''}${fmt(b - a, 1)} °C per min` : 'DS18B20';
