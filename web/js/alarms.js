@@ -9,7 +9,7 @@ N.SENSORS = [
   { key: 'ma', title: 'Belt motor', unit: 'mA', d: 0, dir: 'high', lim: 'ma', min: 0, max: 1200, part: 'INA219',
     high: ['Belt motor is working harder than normal.', 'Check the belt for something rubbing or jammed.'],
     red: ['Belt motor current is too high.', 'Stop the line and clear whatever is jamming the belt.'],
-    stopped: ['Belt motor is not drawing current.', 'Check the 12 V supply, the relay and the motor wires.'] },
+    stopped: ['Belt motor is not drawing current.', 'Check the 5.5 V supply, switch S1, the relay and the motor wires.'] },
   { key: 'vib', title: 'Motor shaking', unit: 'g', d: 3, dir: 'high', lim: 'vib', min: 0, max: 0.25, part: 'MPU-6050',
     high: ['Motor is shaking more than normal.', 'Check the motor mount screws.'],
     red: ['Motor is shaking hard.', 'Stop the line and tighten the motor mount.'] },
