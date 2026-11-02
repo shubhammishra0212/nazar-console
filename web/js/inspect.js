@@ -5,7 +5,8 @@
 //
 // NO_PART, AI offline, an error or a timeout are logged and answered with PASS, so the belt moves on. (The firmware
 // also lets the part pass by itself after wait_ms if no verdict arrives at all.) With `stops 0` firmware the belt
-// never stops: the photo is taken stop_ms after the `part` message, and only FAIL / HOLD are sent.
+// never stops: `inspect` still arrives when the part reaches the camera, the verdict is sent the same way, and the
+// ESP32 times the gate; no `go` follows, so we do not wait for one.
 'use strict';
 
 N.inspect = (() => {
@@ -16,11 +17,9 @@ N.inspect = (() => {
 
   const vurl = path => S.settings.ai.visionUrl.replace(/\/+$/, '') + path;
 
-  N.on('msg:inspect', m => run(m.n, 'stop'));
-  N.on('msg:part', m => {
-    const cfg = S.link.cfg;
-    if (cfg && cfg.stops === 0) setTimeout(() => run(m.n, 'flow'), cfg.stop_ms ?? S.settings.timing.stop_ms);
-  });
+  // The firmware sends `inspect` in both modes: stop-and-inspect (belt stopped, a `go` follows) and continuous
+  // (`stops 0`: belt keeps running, mode stays RUN, no `go`).
+  N.on('msg:inspect', m => run(m.n, S.link.cfg && S.link.cfg.stops === 0 ? 'flow' : 'stop'));
   N.on('msg:go', m => {
     done.add(m.n);
     if (done.size > 200) done.delete(done.values().next().value);
@@ -30,7 +29,7 @@ N.inspect = (() => {
     if (current && current.n === m.n) current = null;
     N.emit('inspection-state');
   });
-  N.on('msg:gate', m => N.event('info', `Reject gate fired for part ${m.n}.`));
+  N.on('msg:gate', m => N.event('info', m.n ? `Reject gate fired for part ${m.n}.` : 'Reject gate fired (manual test).'));
   N.on('reset', () => { current = null; done.clear(); });
 
   async function run(n, kind) {
@@ -112,9 +111,7 @@ N.inspect = (() => {
     const verdict = r.verdict || r.skip;                        // PASS HOLD REJECT NO_PART or a skip code
     const real = verdict === 'PASS' || verdict === 'HOLD' || verdict === 'REJECT';
     // the command to the ESP32
-    let cmd = null;
-    if (kind === 'stop') cmd = verdict === 'REJECT' ? 'FAIL' : verdict === 'HOLD' ? 'HOLD' : 'PASS';
-    else cmd = verdict === 'REJECT' ? 'FAIL' : verdict === 'HOLD' ? 'HOLD' : null;
+    const cmd = verdict === 'REJECT' ? 'FAIL' : verdict === 'HOLD' ? 'HOLD' : 'PASS';
     if (cmd && !done.has(n) && S.source !== 'none') N.link.send(cmd, true);
     else if (cmd && done.has(n)) N.event('amber', `Verdict for part ${n} came after the belt had moved on; not sent.`);
 

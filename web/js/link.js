@@ -11,6 +11,7 @@ N.link = (() => {
   let linesThisSecond = 0;
   let wantPort = '';             // the port we are trying to (re)connect to
   const lastSet = {};            // key -> time we last sent SET for it (no SET storms)
+  let lastStopResend = 0;
 
   function setState(state, extra) {
     Object.assign(S.link, { state }, extra || {});
@@ -45,7 +46,8 @@ N.link = (() => {
         if (!S.link.linkOk) N.event('ok', 'Two-way link OK: the ESP32 answered PING.');
         S.link.linkOk = true; N.emit('link'); break;
       case 'ack': N.emit('msg:ack', m); break;
-      case 'err': N.event('amber', `The ESP32 refused a command: ${m.msg || '?'}`); break;
+      // a refused command (late or duplicate verdict, verdict during HOLD) is logged; the link itself is fine
+      case 'err': N.event('amber', `The ESP32 refused a command: ${m.msg || '?'}`); N.emit('msg:err', m); break;
       case 'part': case 'inspect': case 'go': case 'gate': N.emit('msg:' + m.t, m); break;
       case 'log': break;                                  // serial monitor only
       default: break;                                     // unknown types are ignored (contract §1)
@@ -69,8 +71,8 @@ N.link = (() => {
         if (before[k] !== ok) N.event(ok ? 'ok' : 'amber', `${SENSOR_NAMES[k] || k} ${ok ? 'is back' : 'disappeared'}.`);
       }
     }
-    // a hello after the first one can mean the board rebooted: put back the operator's Stop
-    if (!firstHello && S.stopRequested && S.tel && S.tel.mode !== 'STOP') send('STOP', true);
+    // after a reboot (or a reconnect) the firmware starts in RUN with the belt on: put back the operator's Stop
+    if (S.stopRequested && Date.now() - lastStopResend > 2000) { lastStopResend = Date.now(); send('STOP', true); }
     syncTiming();
     N.emit('hello', m);
     N.emit('link');

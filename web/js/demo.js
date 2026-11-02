@@ -16,6 +16,7 @@ N.demoBoard = (() => {
       irLeft: 0,              // ms the IR stays 1
       toStop: null,           // ms of running left until the belt stops under the camera
       insp: null,             // {n, stoppedFor, verdict}
+      flow: null, toStopN: 0,  // continuous mode: part waiting for a verdict
       gates: [],              // [{n, left}] ms of running time until the gate fires
       gateOpen: 0,
       before: 'RUN',          // mode to return to after STOP
@@ -51,18 +52,20 @@ N.demoBoard = (() => {
         b.irLeft = 180;
         b.nextPart = 2200 + Math.random() * 1400;
         send({ t: 'part', n: b.parts });
-        if (b.cfg.stops) b.toStop = b.cfg.stop_ms;
+        b.toStop = b.cfg.stop_ms; b.toStopN = b.parts;     // reaches the camera after stop_ms of running
       }
     }
     if (b.irLeft > 0) { b.irLeft -= dt; b.ir = b.irLeft > 0 ? 1 : 0; } else b.ir = 0;
     if (running && b.toStop != null) {
       b.toStop -= dt;
       if (b.toStop <= 0) {
-        b.toStop = null; b.belt = 0; b.mode = 'INSPECT';
-        b.insp = { n: b.parts, stoppedFor: 0, verdict: null };
-        send({ t: 'inspect', n: b.parts });
+        b.toStop = null;
+        if (b.cfg.stops) { b.belt = 0; b.mode = 'INSPECT'; b.insp = { n: b.toStopN, stoppedFor: 0, verdict: null }; }
+        else b.flow = { n: b.toStopN, age: 0 };               // continuous: belt keeps running, no go follows
+        send({ t: 'inspect', n: b.toStopN });
       }
     }
+    if (b.flow) { b.flow.age += dt; if (b.flow.age >= b.cfg.wait_ms) b.flow = null; }
     if (b.mode === 'INSPECT' && b.insp) {
       b.insp.stoppedFor += dt;
       const v = b.insp.verdict;
@@ -116,13 +119,15 @@ N.demoBoard = (() => {
     const parts = line.trim().split(/\s+/);
     const cmd = (parts[0] || '').toUpperCase();
     if (!cmd) return;
-    const ack = () => send({ t: 'ack', cmd });
+    const ack = () => send({ t: 'ack', cmd: cmd === 'SET' || cmd === 'BELT' ? parts.join(' ').toUpperCase() : cmd });
     switch (cmd) {
       case 'PING': send({ t: 'pong' }); hello(); break;
       case 'PASS': case 'FAIL':
-        if (b.mode === 'INSPECT' && b.insp) { b.insp.verdict = cmd; ack(); }
-        else if (cmd === 'FAIL' && !b.cfg.stops) { b.gates.push({ n: b.parts, left: b.cfg.gate_ms }); ack(); }
-        else send({ t: 'err', msg: `${cmd} but no part under the camera` });
+        if (b.mode === 'HOLD') send({ t: 'err', msg: `${cmd} ignored: line is on HOLD` });
+        else if (b.mode === 'INSPECT' && b.insp && !b.insp.verdict) { b.insp.verdict = cmd; ack(); }
+        else if (b.mode === 'INSPECT' && b.insp) send({ t: 'err', msg: `${cmd} ignored: part ${b.insp.n} already has a verdict` });
+        else if (b.flow) { if (cmd === 'FAIL') b.gates.push({ n: b.flow.n, left: b.cfg.gate_ms }); b.flow = null; ack(); }
+        else send({ t: 'err', msg: `${cmd} ignored: no part waiting for a verdict` });
         break;
       case 'HOLD':
         if (b.mode !== 'STOP') { b.mode = 'HOLD'; b.belt = 0; b.holdFor = 0; }
@@ -139,7 +144,7 @@ N.demoBoard = (() => {
       case 'START':
         if (b.mode === 'STOP') { b.mode = b.before; b.belt = (b.mode === 'RUN') ? 1 : 0; }
         ack(); break;
-      case 'REJECT': b.rej += 1; b.gateOpen = b.cfg.gate_open_ms; send({ t: 'gate', n: b.parts }); ack(); break;
+      case 'REJECT': b.rej += 1; b.gateOpen = b.cfg.gate_open_ms; send({ t: 'gate', n: 0 }); ack(); break;
       case 'BELT':
         if (b.mode === 'STOP') { b.belt = parts[1] === '1' ? 1 : 0; ack(); }
         else send({ t: 'err', msg: 'BELT only works in STOP mode' });
