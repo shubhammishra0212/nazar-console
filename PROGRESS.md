@@ -13,8 +13,12 @@ Restarted agent: read this file and `git log` first, never redo finished work.
   saved(path|null), camInfo(camera, list|null, ok), opened_file(path, ok, msg). Settings injected as `window.__NAZAR_SAVED`,
   `window.__NAZAR_NATIVE=true`. Env `NAZAR_WEB_DIR` loads web/ from the repo.
 
+- Web, written + `node --check` OK (not yet run in a browser): `web/index.html`, `web/css/{tokens,layout,panels,overlays}.css`,
+  `web/js/{util,store,bridge,demo,link,alarms}.js`. Global namespace `N`, bus `N.on/N.emit`, state `N.S`.
+
 ## In progress
-- `web/` UI (index.html first).
+- `web/js/` remaining, in index.html load order: charts, camera, inspect, csv, ui-top, ui-tiles, ui-status,
+  ui-inspect, ui-events, ui-drawer, agent, main.
 
 ## Next
 1. `web/`: index.html, css/, fonts/, js modules (util, store, bridge, link, demo, alarms, charts, camera, inspect, ui-*, agent, csv, main).
