@@ -1,0 +1,68 @@
+/* tokens.css — fonts (bundled, offline) and the colour tokens of the machine-panel look, light and dark. */
+
+@font-face { font-family: Barlow; font-weight: 500; src: url(../fonts/Barlow-500.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-weight: 600; src: url(../fonts/Barlow-600.woff2) format("woff2"); }
+@font-face { font-family: Barlow; font-weight: 700; src: url(../fonts/Barlow-700.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 600; src: url(../fonts/BarlowSemiCondensed-600.woff2) format("woff2"); }
+@font-face { font-family: "Barlow Semi Condensed"; font-weight: 700; src: url(../fonts/BarlowSemiCondensed-700.woff2) format("woff2"); }
+@font-face { font-family: "Roboto Mono"; font-weight: 500; src: url(../fonts/RobotoMono-500.woff2) format("woff2"); }
+@font-face { font-family: "Roboto Mono"; font-weight: 600; src: url(../fonts/RobotoMono-600.woff2) format("woff2"); }
+
+:root {
+  --cabinet: #D9DCD6;       /* window background: cabinet grey */
+  --panel: #F5F6F2;         /* group-box face */
+  --panel-2: #ECEEE8;       /* sunken areas inside a panel */
+  --rule: #C3C7BF;          /* lines between things */
+  --rule-strong: #9EA39A;
+  --ink: #1D2124;
+  --ink-2: #4A5157;         /* secondary text, still 600 weight */
+  --graphite: #23282C;      /* title bar, group tabs */
+  --graphite-ink: #F2F3EF;
+  --signal: #F2B705;        /* status band and engineer accents only */
+  --signal-ink: #1D1A10;
+  --data: #1F5AA6;          /* every chart line */
+  --data-fill: rgba(31, 90, 166, .12);
+  --ok: #24873F;
+  --warn: #E09A00;
+  --bad: #C8102E;
+  --ok-soft: #DCEBDD;
+  --warn-soft: #F7E7C2;
+  --bad-soft: #F3D3D7;
+  --bone: #E9E6DC;          /* Stop line key: ink on bone */
+  --key: #FBFBF8;
+  --key-edge: #A9AEA5;
+  --feed: #111416;
+  --shadow: 0 1px 0 rgba(0, 0, 0, .08);
+
+  --f-ui: Barlow, -apple-system, "Helvetica Neue", sans-serif;
+  --f-num: "Barlow Semi Condensed", Barlow, sans-serif;
+  --f-mono: "Roboto Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cabinet: #15181A;
+    --panel: #1E2326;
+    --panel-2: #191D20;
+    --rule: #343B40;
+    --rule-strong: #4C555B;
+    --ink: #E8EAE5;
+    --ink-2: #A9B0B4;
+    --graphite: #0C0E10;
+    --graphite-ink: #EEF0EC;
+    --data: #5B93DD;
+    --data-fill: rgba(91, 147, 221, .16);
+    --ok: #3FA65B;
+    --warn: #F0A818;
+    --bad: #E5384F;
+    --ok-soft: #1E3A26;
+    --warn-soft: #3D3016;
+    --bad-soft: #45202A;
+    --bone: #D8D4C8;
+    --key: #2A3034;
+    --key-edge: #4C555B;
+    --feed: #000;
+    color-scheme: dark;
+  }
+}

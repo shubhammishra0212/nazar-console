@@ -1,0 +1,113 @@
+/* layout.css — the frame: title bar, status band, two columns, key bar. Keys and group boxes. */
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: var(--f-ui); font-weight: 600; font-size: 14px; color: var(--ink);
+  background: var(--cabinet);
+  display: grid; grid-template-rows: auto auto 1fr auto; overflow: hidden;
+  -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none;
+}
+button, select, input { font: inherit; color: inherit; }
+code { font-family: var(--f-mono); font-weight: 500; }
+.grow { flex: 1; }
+[hidden] { display: none !important; }
+
+/* ---------- title bar ---------- */
+.titlebar {
+  display: flex; align-items: center; gap: 14px; padding: 0 18px; height: 60px;
+  background: var(--graphite); color: var(--graphite-ink);
+}
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.brand .eye { width: 38px; height: 38px; border-radius: 9px; background: #000; display: grid; place-items: center; border: 1px solid #3a4146; }
+.brand .eye img { width: 30px; height: 30px; }
+.brand b { font-family: var(--f-num); font-weight: 700; font-size: 23px; letter-spacing: .08em; }
+.brand .sep { color: #6b7378; font-size: 20px; }
+.brand .sub { font-size: 17px; color: #C9CDC8; }
+.pill {
+  display: flex; align-items: center; gap: 8px; padding: 6px 12px; margin-left: 6px;
+  border: 1px solid #424a50; background: #1a1e21; font-size: 14px; white-space: nowrap;
+}
+.pill i { width: 10px; height: 10px; border-radius: 50%; background: #6b7378; }
+.pill code { color: #A9B0B4; font-size: 13px; }
+.pill.live i { background: #3FBF62; }
+.pill.demo i { background: var(--signal); }
+.pill.lost i { background: var(--bad); animation: blink 1s steps(2) infinite; }
+.pill.wait i { background: var(--warn); }
+@keyframes blink { 50% { opacity: .2; } }
+.portpick { display: flex; align-items: center; gap: 8px; font-size: 14px; color: #C9CDC8; }
+.portpick select {
+  min-width: 220px; height: 34px; padding: 0 8px; background: #F2F3EF; color: #1D2124;
+  border: 1px solid #000; border-radius: 3px; font-family: var(--f-mono); font-weight: 500; font-size: 13px;
+}
+.clockbox { display: flex; flex-direction: column; line-height: 1.15; padding-left: 14px; border-left: 1px solid #3a4146; }
+.clockbox small { font-size: 13px; color: #A9B0B4; }
+.clockbox code { font-size: 17px; font-weight: 600; letter-spacing: .02em; }
+
+/* ---------- keys (machine buttons) ---------- */
+.key {
+  height: 36px; padding: 0 16px; border: 1px solid var(--key-edge); border-bottom-width: 3px; border-radius: 3px;
+  background: var(--key); color: var(--ink); font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap;
+}
+.key:active { border-bottom-width: 1px; transform: translateY(2px); }
+.key:disabled { opacity: .45; cursor: default; }
+.key.small { height: 30px; padding: 0 11px; font-size: 13px; border-bottom-width: 2px; }
+.key.dark { background: #F2F3EF; color: #1D2124; border-color: #000; }
+.key.dark.ghost { background: transparent; color: #F2F3EF; border-color: #6b7378; }
+.key.dark.ghost.on { background: var(--signal); color: var(--signal-ink); border-color: #000; }
+.key.stopkey { background: var(--bone); color: #1D2124; border-color: #000; min-width: 104px; }
+.key.go { background: var(--ok); color: #fff; border-color: #145226; height: 48px; font-size: 18px; width: 100%; }
+.key.engineer { background: var(--signal); color: var(--signal-ink); border-color: #8a6a00; }
+.key.on { background: var(--graphite); color: var(--graphite-ink); border-color: #000; }
+button.link { background: none; border: 0; padding: 0; color: var(--ink-2); text-decoration: underline; cursor: pointer; font-size: 13px; }
+
+/* ---------- status band: permanent, striped, yellow ---------- */
+.band {
+  display: flex; align-items: center; gap: 14px; height: 34px; padding-right: 18px;
+  background: var(--signal); color: var(--signal-ink); font-size: 15px; white-space: nowrap; overflow: hidden;
+}
+.band .hatch { width: 92px; align-self: stretch; background: repeating-linear-gradient(-45deg, #1D1A10 0 12px, transparent 12px 24px); }
+.band b { font-family: var(--f-num); font-weight: 700; font-size: 17px; letter-spacing: .04em; }
+.band span { overflow: hidden; text-overflow: ellipsis; }
+.band.lost { background: #F2B705; }
+.band.lost b { color: #8f0a20; }
+
+/* ---------- columns ---------- */
+.main {
+  display: grid; grid-template-columns: minmax(0, 1fr) clamp(400px, 30vw, 520px); gap: 14px;
+  padding: 14px 18px; min-height: 0;
+}
+.leftcol, .rightcol { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+
+/* ---------- group box: graphite title tab on a panel ---------- */
+.group { display: flex; flex-direction: column; min-height: 0; }
+.group > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; min-height: 32px; }
+.group > header h2 {
+  margin: 0; padding: 6px 14px 5px; background: var(--graphite); color: var(--graphite-ink);
+  font-family: var(--f-num); font-weight: 700; font-size: 16px; letter-spacing: .02em; line-height: 1.2;
+}
+.group > header .tools { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; }
+.group > header .tools select {
+  height: 30px; max-width: 220px; background: var(--key); border: 1px solid var(--key-edge); border-radius: 3px; padding: 0 6px; font-size: 13px;
+}
+.group > :not(header) { background: var(--panel); border: 1px solid var(--rule-strong); box-shadow: var(--shadow); }
+.hint { color: var(--ink-2); font-size: 13px; }
+
+/* ---------- bottom key bar ---------- */
+.keybar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 18px; background: var(--graphite); color: var(--graphite-ink);
+}
+.keybar .key { height: 38px; }
+.readouts { display: flex; gap: 18px; font-size: 13px; color: #A9B0B4; white-space: nowrap; }
+.readouts code { color: var(--graphite-ink); font-size: 13px; margin-left: 4px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 72px; transform: translateX(-50%); z-index: 60;
+  background: var(--graphite); color: var(--graphite-ink); padding: 10px 18px; border-left: 5px solid var(--signal); font-size: 15px;
+}
+
+@media (max-width: 1500px) {
+  .keybar .key { padding: 0 11px; font-size: 13px; }
+  .readouts { gap: 12px; }
+  .readouts span:nth-child(4) { display: none; }
+}
