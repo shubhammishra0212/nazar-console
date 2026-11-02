@@ -23,7 +23,16 @@ enum Settings {
     }
 
     /// Script injected at document start.
+    /// Test hooks from the environment: NAZAR_AUTOCONNECT=/dev/ttysN connects to that port at launch,
+    /// NAZAR_NO_CAMERA=1 leaves the camera off (no permission prompt during automated tests).
     static var injectionScript: String {
-        "window.__NAZAR_SAVED = \(json()); window.__NAZAR_NATIVE = true;"
+        let env = ProcessInfo.processInfo.environment
+        var s = "window.__NAZAR_SAVED = \(json()); window.__NAZAR_NATIVE = true;"
+        if let p = env["NAZAR_AUTOCONNECT"], !p.isEmpty,
+           let d = try? JSONSerialization.data(withJSONObject: [p]), let a = String(data: d, encoding: .utf8) {
+            s += " window.__NAZAR_AUTOCONNECT = \(a)[0];"
+        }
+        if env["NAZAR_NO_CAMERA"] == "1" { s += " window.__NAZAR_NO_CAMERA = true;" }
+        return s
     }
 }

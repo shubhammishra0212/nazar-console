@@ -148,7 +148,11 @@ N.link = (() => {
   // ---------- answers from the Mac ----------
   N.on('native:ports', list => {
     N.emit('ports', list);
-    if (S.link.state === 'lost' && wantPort && list.includes(wantPort)) {
+    const auto = window.__NAZAR_AUTOCONNECT;
+    if (auto && !N.autoTried && S.source === 'none' && list.includes(auto)) {
+      N.autoTried = true;
+      connect(auto);                                      // test hook (NAZAR_AUTOCONNECT)
+    } else if (S.link.state === 'lost' && wantPort && list.includes(wantPort)) {
       connect(wantPort);
     } else if (S.link.state === 'idle' && S.source === 'none' && !N.autoTried && S.settings.port && list.includes(S.settings.port)) {
       N.autoTried = true;

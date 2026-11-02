@@ -33,6 +33,9 @@ N.bridge = (() => {
   }
 
   if (native) {
+    // page errors go to the app's stderr (open --stderr <file>), so they can be read without Web Inspector
+    window.addEventListener('error', e => post({ cmd: 'log', text: `page error: ${e.message} at ${e.filename}:${e.lineno}` }));
+    window.addEventListener('unhandledrejection', e => post({ cmd: 'log', text: `page promise error: ${e.reason}` }));
     return {
       native: true,
       listPorts: () => post({ cmd: 'listPorts' }),

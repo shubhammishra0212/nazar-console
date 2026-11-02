@@ -184,6 +184,7 @@ N.camera = (() => {
       else if (S.source === 'demo' && !stream && !S.settings.camOff) start(DEMO_ID);
       else listDevices();
     });
+    if (window.__NAZAR_NO_CAMERA) { msg('Camera left off for this test run (NAZAR_NO_CAMERA=1).'); return; }
     if (S.settings.camOff) { stop(); listDevices(); } else start();
   }
 
