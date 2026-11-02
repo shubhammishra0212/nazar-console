@@ -27,10 +27,10 @@ N.uiInspect = (() => {
       $('vFill').style.width = '0'; $('vScore').textContent = 'score —';
     } else {
       vb.className = 'verdict v-' + (li.real ? li.verdict : 'SKIP');
-      $('vWord').textContent = li.real ? li.verdict : li.verdict === 'NO_PART' ? 'NO PART' : 'NOT CHECKED';
+      $('vWord').textContent = li.real ? li.verdict : li.verdict === 'NO_PART' ? 'NO PART' : 'SKIPPED';
       $('vMeta').innerHTML = '';
       $('vMeta').append(`Part ${li.n} · ${hms(li.at)}`, el('br'),
-        li.real ? `${li.ms != null ? li.ms + ' ms' : ''}` : 'Sent PASS: the line keeps moving');
+        li.real ? `${li.ms != null ? li.ms + ' ms' : ''}` : 'Sent PASS, line moves on');
       if (li.crop) $('vCrop').src = img(li.crop); else $('vCrop').removeAttribute('src');
       if (li.heatmap) $('vHeat').src = img(li.heatmap); else $('vHeat').removeAttribute('src');
       const hold = li.hold ?? S.ai.hold ?? 0.33, rej = li.reject ?? S.ai.reject ?? 0.44;
