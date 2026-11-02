@@ -22,12 +22,20 @@ Restarted agent: read this file and `git log` first, never redo finished work.
   layout OK. Screenshot helper lives in the agent scratchpad (not in repo); command is in README later.
 - Inspection rows take v/ma/vib/vpk from the last RUNNING second before the stop (belt is off at the photo).
 
+- `tools/sim_board.py` (pty, v2 protocol, firmware contract choices: inspect in both modes, gate n 0 for manual
+  REJECT, err for late/duplicate/HOLD verdicts, SET/BELT ack echo) — protocol self-test OK.
+- `tools/mock_ai.py` (contract-shaped vision 8765 + agent 8766, --slow for timeout tests).
+- Native app verified with sim (NAZAR_AUTOCONNECT + NAZAR_NO_CAMERA hooks): connect, PING → link OK, hello,
+  PASS sent per part with no camera, alarms (shaking amber/red), light sensor no-signal + back, board reboot,
+  unplug → CONNECTION LOST → auto-reconnect when the pty came back. App quit cleanly.
+- Browser checks: AI offline → SKIPPED + PASS; slow vision (3 s) → TIMEOUT + PASS; mock AI → verdicts, crop,
+  heatmap; mock agent → 8D view; continuous mode (stops 0), Stop/Start, Hold/Resume flows OK.
+- Screenshots in `docs/screen-*.png`.
+
 ## In progress
-- `tools/sim_board.py`, then native verification with the built app.
+- README.md, then docs/console.md → PDF.
 
 ## Next
-2. `tools/sim_board.py`.
-3. Verify: node --check, headless Chrome screenshots (1440x900, 1920x1080, dark), native serial with sim.
-4. README.md, docs/console.md → docs/NAZAR-04-Console-App.pdf (+ copy to ../PDFs/).
+- Final rebuild of the app after last web changes; final PROGRESS.
 
 Scope note (coordinator): 8D view is English only — no language toggle, always send `"lang":"en"`.

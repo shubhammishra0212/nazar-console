@@ -25,6 +25,7 @@ N.uiInspect = (() => {
       $('vMeta').textContent = N.inspect.busy ? 'Checking a part…' : 'No part inspected yet';
       $('vCrop').removeAttribute('src'); $('vHeat').removeAttribute('src');
       $('vFill').style.width = '0'; $('vScore').textContent = 'score —';
+      $('vHoldMark').hidden = $('vRejMark').hidden = true;
     } else {
       vb.className = 'verdict v-' + (li.real ? li.verdict : 'SKIP');
       $('vWord').textContent = li.real ? li.verdict : li.verdict === 'NO_PART' ? 'NO PART' : 'SKIPPED';
@@ -39,6 +40,7 @@ N.uiInspect = (() => {
       $('vFill').style.width = li.score != null ? pos(li.score) : '0';
       $('vFill').style.background = li.verdict === 'REJECT' ? 'var(--bad)' : li.verdict === 'HOLD' ? 'var(--warn)' : 'var(--data)';
       $('vHoldMark').style.left = pos(hold); $('vRejMark').style.left = pos(rej);
+      $('vHoldMark').hidden = $('vRejMark').hidden = false;
       $('vScore').textContent = li.score != null ? `score ${fmt(li.score, 2)}` : 'score —';
     }
     // last 12
