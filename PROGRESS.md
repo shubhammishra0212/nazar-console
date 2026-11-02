@@ -32,10 +32,14 @@ Restarted agent: read this file and `git log` first, never redo finished work.
   heatmap; mock agent → 8D view; continuous mode (stops 0), Stop/Start, Hold/Resume flows OK.
 - Screenshots in `docs/screen-*.png`.
 
-## In progress
-- README.md, then docs/console.md → PDF.
+- README.md; docs/console.md → docs/NAZAR-04-Console-App.pdf (4 pages, renders, 2 screenshots), copied to ../PDFs/.
+- Final app rebuild after the last web change: build/NAZAR Console.app + build/NAZAR-Console-mac.zip.
 
-## Next
-- Final rebuild of the app after last web changes; final PROGRESS.
+## In progress
+- Nothing. Task complete.
+
+## Next (for the team, on the rig)
+- Run against the real nazar-firmware and C270 camera; check CoreMediaIO exposure controls on the C270.
+- Run with the real nazar-vision and nazar-agent; click through camera prompt, Save dialog, Start AI.
 
 Scope note (coordinator): 8D view is English only — no language toggle, always send `"lang":"en"`.
