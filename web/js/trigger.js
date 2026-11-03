@@ -4,8 +4,9 @@
 // (trig.zone % of the width and height), SEEN is sent: the ESP32 stops the belt at once and sends `inspect`, and the
 // inspection loop takes it from there, exactly as after an IR edge (photo → AI → PASS / FAIL → gate).
 // The washer that was just judged is still in view when the belt restarts, so the next SEEN is only sent after the
-// middle of the picture has been empty for EMPTY_LOOKS looks in a row. Washers on the belt must therefore be spaced
-// about one camera view apart.
+// middle of the picture has been empty for EMPTY_LOOKS looks in a row AND the belt has run REARM_MS since the restart
+// (a glint can hide the washer from /locate for a few looks; without the wait it was inspected twice). Washers on the
+// belt must therefore be spaced about one camera view apart.
 'use strict';
 
 N.trigger = (() => {
@@ -13,13 +14,15 @@ N.trigger = (() => {
   const { fetchT } = N.util;
   const EMPTY_LOOKS = 3;
   const CONFIRM_MS = 1500;           // no `part` from the board by then: SEEN was refused or lost, look again
-  let armed = true, empty = 0, busy = false, sentAt = 0, confirmed = true, state = 'off', offlineSince = 0;
+  const REARM_MS = 2500;             // after a restart the judged washer is still leaving: no new SEEN before this
+  let armed = true, empty = 0, busy = false, sentAt = 0, confirmed = true, state = 'off', offlineSince = 0, goAt = 0;
 
   const vurl = path => S.settings.ai.visionUrl.replace(/\/+$/, '') + path;
   /** Camera trigger in use: chosen in the settings AND the board's firmware knows it (reports cam 1). */
   const active = () => S.source !== 'none' && S.settings.timing.cam === 1 && !!S.link.cfg && S.link.cfg.cam === 1;
 
   N.on('msg:part', () => { confirmed = true; });
+  N.on('msg:go', () => { goAt = Date.now(); });
   N.on('reset', () => { armed = true; empty = 0; sentAt = 0; confirmed = true; });
 
   async function find() {
@@ -57,7 +60,7 @@ N.trigger = (() => {
     const inZone = !!r.found && Math.abs(r.cx / r.w - 0.5) * 2 <= zone && Math.abs(r.cy / r.h - 0.5) * 2 <= zone;
     if (!armed) {
       empty = inZone ? 0 : empty + 1;
-      if (empty < EMPTY_LOOKS) return set('leaving');
+      if (empty < EMPTY_LOOKS || Date.now() - goAt < REARM_MS) return set('leaving');
       armed = true;
     }
     if (inZone) {
