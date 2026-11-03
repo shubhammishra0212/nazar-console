@@ -9,7 +9,8 @@ N.DEFAULTS = {
     temp: { amber: 45, red: 60 },                // motor can, °C
     lux: { amber: 300, red: 120 },               // tunnel light: alarm BELOW these
   },
-  timing: { stop_ms: 150, dwell_ms: 1200, wait_ms: 5000, gate_ms: 800, gate_open_ms: 600, stops: 1 },
+  timing: { stop_ms: 150, dwell_ms: 1200, wait_ms: 5000, gate_ms: 800, gate_open_ms: 600, stops: 1, cam: 1 },
+  trig: { zone: 50, everyMs: 120 },   // camera part trigger: washer centre inside the middle zone % of the picture
   ai: {
     on: true,
     visionUrl: 'http://127.0.0.1:8765',

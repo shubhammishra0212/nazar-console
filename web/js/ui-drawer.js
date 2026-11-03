@@ -102,7 +102,7 @@ N.uiDrawer = (() => {
 
   // ================= AI & timing =================
   const TIMING = [
-    ['stop_ms', 'Stop delay', 'ms', 'Belt runs this long after the IR sensor, so the washer stops centred under the camera.'],
+    ['stop_ms', 'Stop delay (IR only)', 'ms', 'IR trigger: belt runs this long after the IR sensor, so the washer stops centred under the camera.'],
     ['dwell_ms', 'Stop time', 'ms', 'Shortest time a washer stays stopped under the camera.'],
     ['wait_ms', 'Verdict wait', 'ms', 'No verdict by then: the washer passes. The line never waits forever.'],
     ['gate_ms', 'Gate delay', 'ms', 'Belt running time from restart until the gate fires for a reject.'],
@@ -158,6 +158,16 @@ N.uiDrawer = (() => {
     stops.value = String(T.stops);
     stops.addEventListener('change', () => setTiming('stops', Number(stops.value)));
     tm.append(el('div', { class: 'frow wide' }, el('span', { text: 'Inspection mode' }), stops));
+    const trig = el('select', {}, new Option('Camera finds the washer (1)', '1'), new Option('IR sensor FC-51 (0)', '0'));
+    trig.value = String(T.cam);
+    trig.addEventListener('change', () => setTiming('cam', Number(trig.value)));
+    tm.append(el('div', { class: 'frow wide' }, el('span', { text: 'Part trigger' }), trig));
+    if (!('cam' in cfg) && S.source !== 'none') tm.append(el('p', { class: 'fnote', text: 'This firmware has no camera trigger: upload firmware 2.1 or newer.' }));
+    const zr = numberRow('Camera stop zone (middle of picture)', '%', S.settings.trig.zone, v => {
+      S.settings.trig.zone = Math.min(100, Math.max(10, Math.round(v ?? 50))); N.store.saveSettings(); setTimeout(renderAI, 50);
+    }, '5');
+    zr.title = 'The belt stops as soon as a whole washer has its centre inside this middle part of the picture. Smaller = stops nearer the centre.';
+    tm.append(zr);
     grid.append(tm);
     pane.append(grid);
   }

@@ -144,7 +144,11 @@ N.camera = (() => {
     $('btnCamPower').textContent = 'Turn off';
     N.emit('camera');
   }
-  N.on('msg:part', () => { if (currentId === DEMO_ID) washers.push({ x: -120, stop: true, seed: Math.random() }); });
+  const camTrigger = () => !!(S.link.cfg && S.link.cfg.cam === 1);
+  // IR trigger: a washer appears when the board reports the part and stops itself under the camera.
+  // Camera trigger: the demo board lays washers on the belt; they ride with it until the trigger stops the belt.
+  N.on('msg:part', () => { if (currentId === DEMO_ID && !camTrigger()) washers.push({ x: -120, stop: true, seed: Math.random() }); });
+  N.on('demo:feed', () => { if (currentId === DEMO_ID) washers.push({ x: -130, stop: false, seed: Math.random() }); });
   N.on('msg:go', () => { for (const w of washers) w.stop = false; });
 
   function drawDemo(dt) {
@@ -185,6 +189,26 @@ N.camera = (() => {
     const c = frameCanvas();
     if (!c) return Promise.resolve(null);
     return new Promise(res => c.toBlob(b => res(b), 'image/jpeg', 0.9));
+  }
+
+  const smallCanvas = document.createElement('canvas');
+  /** The current frame scaled to `side` px on its long edge, as a JPEG Blob (the camera part trigger), or null. */
+  function grabSmall(side) {
+    const v = video();
+    if (!v.videoWidth) return Promise.resolve(null);
+    const s = Math.min(1, side / Math.max(v.videoWidth, v.videoHeight));
+    smallCanvas.width = Math.round(v.videoWidth * s); smallCanvas.height = Math.round(v.videoHeight * s);
+    smallCanvas.getContext('2d').drawImage(v, 0, 0, smallCanvas.width, smallCanvas.height);
+    return new Promise(res => smallCanvas.toBlob(b => res(b), 'image/jpeg', 0.8));
+  }
+
+  /** /locate for the drawn demo camera: the whole washer nearest the middle, in demo-canvas pixels. */
+  function demoLocate() {
+    const W = 1280, H = 720, r = 120;
+    const whole = washers.filter(w => w.x - r >= 1 && w.x + r <= W - 1);
+    if (!whole.length) return { ok: true, found: false, w: W, h: H };
+    const w = whole.reduce((a, b) => (Math.abs(a.x - W / 2) <= Math.abs(b.x - W / 2) ? a : b));
+    return { ok: true, found: true, cx: w.x, cy: 360, r, w: W, h: H };
   }
 
   function snapshot() {
@@ -233,5 +257,6 @@ N.camera = (() => {
     if (S.settings.camOff) { stop(); listDevices(); } else start();
   }
 
-  return { init, start, stop, grabFrame, snapshot, applySaved, phoneOf, get label() { return label; }, get on() { return !!stream; }, DEMO_ID };
+  return { init, start, stop, grabFrame, grabSmall, demoLocate, snapshot, applySaved, phoneOf, get label() { return label; },
+    get on() { return !!stream; }, get isDemo() { return currentId === DEMO_ID; }, DEMO_ID };
 })();

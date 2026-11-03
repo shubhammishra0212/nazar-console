@@ -84,7 +84,12 @@ vision service, and `&show=agent|limits|serial|ai|camera|detail&after=20000` to 
 - **Camera**: the live picture only, nothing drawn on it. Camera picker (remembered), Settings, Snapshot (PNG),
   Turn off / on, click to enlarge (Esc closes). The **Too bright** meter is the share of pure-white pixels in the middle.
 - **Sensors**: Belt motor (mA, V, W), Motor shaking (g RMS and peak), Motor temperature (with °C per minute), Tunnel
-  light (lx), Part sensor, Reject gate (Test gate sends `REJECT`). Each shows value, status word and a 60 s sparkline
+  light (lx), Part sensor, Reject gate (Test gate sends `REJECT`). With the camera trigger (default, firmware 2.1+)
+  the Part sensor tile shows the camera instead: Camera watching, Washer under camera, Judged washer leaving, Vision
+  offline. `js/trigger.js` sends 640-px frames to the vision `/locate` ~8 times a second while the belt runs and
+  sends `SEEN` when a whole washer's centre is inside the middle zone (AI & timing › Camera stop zone, default 50 %);
+  the next washer can only stop the belt after the middle has been empty for 3 looks, so space washers about one
+  camera view apart. AI & timing › Part trigger switches back to the IR sensor (`SET cam 0`). Each shows value, status word and a 60 s sparkline
   with amber and red lines; "No signal" when the key has been missing for 3 s. Click for **Sensor detail**: 30 s to
   15 min, Pause (Space), ← → to step, stats, switch sensor keeping the pause.
 - **Line status**: one big word — RUNNING, INSPECTING, CHECK SOON, STOP & CHECK, ON HOLD, STOPPED, NO DATA, NOT

@@ -44,6 +44,7 @@ N.uiTiles = (() => {
     if (S.source === 'none') return { cls: 'st-none', word: 'Not connected', value: '—', unit: '' };
     if (a.state === 'none') return { cls: 'st-none', word: 'No signal', value: 'No signal', unit: '', dim: true };
     if (a.state === 'wait' || tel[s.key] == null) return { cls: 'st-none', word: 'Waiting', value: '—', unit: '', dim: true };
+    if (s.key === 'ir' && N.trigger.active) return N.trigger.describe();
     if (s.key === 'ir') return tel.ir ? { cls: 'st-info', word: 'Part present', value: 'Part', unit: '' } : { cls: 'st-ok', word: 'Clear', value: 'Clear', unit: '' };
     if (s.key === 'gate') return tel.gate ? { cls: 'st-red', word: 'Open', value: 'Open', unit: '' } : { cls: 'st-ok', word: 'Closed', value: 'Closed', unit: '' };
     const cls = { ok: 'st-ok', amber: 'st-amber', red: 'st-red', stopped: 'st-red' }[a.state] || 'st-none';
@@ -64,7 +65,7 @@ N.uiTiles = (() => {
         return a != null && b != null ? `${b - a >= 0 ? '+' : ''}${fmt(b - a, 1)} °C per min` : 'DS18B20';
       }
       case 'lux': return `Amber below ${L.lux.amber} lx`;
-      case 'ir': return `${S.totals.parts} counted`;
+      case 'ir': return `${S.totals.parts} counted${N.trigger.active ? ' · camera finds parts' : ''}`;
       case 'gate': return `${S.totals.rej} rejected`;
       default: return '';
     }

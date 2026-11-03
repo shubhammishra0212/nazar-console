@@ -47,7 +47,10 @@ N.demoBoard = (() => {
     // --- part flow (all timers count belt RUNNING time, like the firmware) ---
     if (running && b.mode === 'RUN') {
       b.nextPart -= dt;
-      if (b.nextPart <= 0) {
+      if (b.nextPart <= 0 && b.cfg.cam) {                  // camera trigger: lay a washer on the belt, the console finds it
+        b.nextPart = 4200 + Math.random() * 1500;          // spaced about one camera view apart
+        N.emit('demo:feed');
+      } else if (b.nextPart <= 0) {
         b.parts += 1;
         b.irLeft = 180;
         b.nextPart = 2200 + Math.random() * 1400;
@@ -58,12 +61,7 @@ N.demoBoard = (() => {
     if (b.irLeft > 0) { b.irLeft -= dt; b.ir = b.irLeft > 0 ? 1 : 0; } else b.ir = 0;
     if (running && b.toStop != null) {
       b.toStop -= dt;
-      if (b.toStop <= 0) {
-        b.toStop = null;
-        if (b.cfg.stops) { b.belt = 0; b.mode = 'INSPECT'; b.insp = { n: b.toStopN, stoppedFor: 0, verdict: null }; }
-        else b.flow = { n: b.toStopN, age: 0 };               // continuous: belt keeps running, no go follows
-        send({ t: 'inspect', n: b.toStopN });
-      }
+      if (b.toStop <= 0) atCamera(b.toStopN);
     }
     if (b.flow) { b.flow.age += dt; if (b.flow.age >= b.cfg.wait_ms) b.flow = null; }
     if (b.mode === 'INSPECT' && b.insp) {
@@ -108,6 +106,13 @@ N.demoBoard = (() => {
     send(tel);
   }
 
+  function atCamera(n) {
+    b.toStop = null;
+    if (b.cfg.stops) { b.belt = 0; b.mode = 'INSPECT'; b.insp = { n, stoppedFor: 0, verdict: null }; }
+    else b.flow = { n, age: 0 };                            // continuous: belt keeps running, no go follows
+    send({ t: 'inspect', n });
+  }
+
   function go(res) {
     const n = b.insp ? b.insp.n : b.parts;
     if (res === 'reject') b.gates.push({ n, left: b.cfg.gate_ms });
@@ -128,6 +133,12 @@ N.demoBoard = (() => {
         else if (b.mode === 'INSPECT' && b.insp) send({ t: 'err', msg: `${cmd} ignored: part ${b.insp.n} already has a verdict` });
         else if (b.flow) { if (cmd === 'FAIL') b.gates.push({ n: b.flow.n, left: b.cfg.gate_ms }); b.flow = null; ack(); }
         else send({ t: 'err', msg: `${cmd} ignored: no part waiting for a verdict` });
+        break;
+      case 'SEEN':                                          // the console camera sees a washer: stop at once
+        if (!b.cfg.cam) send({ t: 'err', msg: 'camera trigger is off (SET CAM 1)' });
+        else if (b.mode !== 'RUN' || !b.belt) send({ t: 'err', msg: 'belt is not running' });
+        else if (b.toStop != null) send({ t: 'err', msg: 'a part is already on its way to the camera' });
+        else { b.parts += 1; send({ t: 'part', n: b.parts }); ack(); atCamera(b.parts); }
         break;
       case 'HOLD':
         if (b.mode !== 'STOP') { b.mode = 'HOLD'; b.belt = 0; b.holdFor = 0; }
