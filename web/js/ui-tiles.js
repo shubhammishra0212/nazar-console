@@ -24,8 +24,13 @@ N.uiTiles = (() => {
       };
       t.root.append(el('h3', { text: s.title }), t.state, t.value, t.canvas, t.foot);
       if (s.key === 'gate') {
-        t.root.append(el('button', { class: 'key small tbtn', text: 'Test gate', title: 'Sends REJECT: fires the gate once, now',
-          onclick: e => { e.stopPropagation(); if (N.link.send('REJECT')) N.event('info', 'Test gate pressed (REJECT sent).'); } }));
+        t.btn = el('button', { class: 'key small tbtn', text: 'Test gate', title: 'Sends REJECT: swings the arm across, now',
+          onclick: e => {
+            e.stopPropagation();
+            const release = N.stopGate() && S.tel && S.tel.gate === 1;   // stop gate already across: open the path
+            if (N.link.send(release ? 'RELEASE' : 'REJECT')) N.event('info', release ? 'Gate opened by hand (RELEASE sent).' : 'Test gate pressed (REJECT sent).');
+          } });
+        t.root.append(t.btn);
       }
       box.append(t.root);
       tiles[s.key] = t;
@@ -46,6 +51,8 @@ N.uiTiles = (() => {
     if (a.state === 'wait' || tel[s.key] == null) return { cls: 'st-none', word: 'Waiting', value: '—', unit: '', dim: true };
     if (s.key === 'ir' && N.trigger.active) return N.trigger.describe();
     if (s.key === 'ir') return tel.ir ? { cls: 'st-info', word: 'Part present', value: 'Part', unit: '' } : { cls: 'st-ok', word: 'Clear', value: 'Clear', unit: '' };
+    if (s.key === 'gate' && N.stopGate()) return tel.gate ? { cls: 'st-red', word: 'Holding a reject', value: 'Closed', unit: '' }
+      : { cls: 'st-ok', word: 'Washers pass', value: 'Open', unit: '' };
     if (s.key === 'gate') return tel.gate ? { cls: 'st-red', word: 'Open', value: 'Open', unit: '' } : { cls: 'st-ok', word: 'Closed', value: 'Closed', unit: '' };
     const cls = { ok: 'st-ok', amber: 'st-amber', red: 'st-red', stopped: 'st-red' }[a.state] || 'st-none';
     let word = N.alarms.stateWord(s, a.state);
@@ -66,7 +73,7 @@ N.uiTiles = (() => {
       }
       case 'lux': return `Amber below ${L.lux.amber} lx`;
       case 'ir': return `${S.totals.parts} counted${N.trigger.active ? ' · camera finds parts' : ''}`;
-      case 'gate': return `${S.totals.rej} rejected`;
+      case 'gate': return `${S.totals.rej} rejected${N.stopGate() ? ' · stop gate' : ''}`;
       default: return '';
     }
   }
@@ -80,6 +87,7 @@ N.uiTiles = (() => {
       t.value.append(d.value);
       if (d.unit) t.value.append(el('small', { text: d.unit }));
       t.foot.textContent = foot(s);
+      if (t.btn) t.btn.textContent = N.stopGate() && (S.tel || {}).gate === 1 ? 'Open gate' : 'Test gate';
       t.root.classList.toggle('alarm-red', d.state === 'red' || d.state === 'stopped');
       t.root.classList.toggle('alarm-amber', d.state === 'amber');
       N.charts.spark(t.canvas, s, SPARK_MS);
@@ -119,7 +127,8 @@ N.uiTiles = (() => {
     let valueText = d.value + (d.unit ? ' ' + d.unit : '');
     let stateText = d.word, stateCls = d.cls;
     if (atT) {
-      if (s.binary) valueText = at ? (s.key === 'gate' ? 'Open' : 'Part') : (s.key === 'gate' ? 'Closed' : 'Clear');
+      const sg = N.stopGate();   // stop gate: 1 = arm across the belt = path closed
+      if (s.binary) valueText = at ? (s.key === 'gate' ? (sg ? 'Closed' : 'Open') : 'Part') : (s.key === 'gate' ? (sg ? 'Open' : 'Closed') : 'Clear');
       else {
         valueText = `${fmt(at, s.d)} ${s.unit}`;
         const j = N.alarms.judge(s, N.alarms.medianAt(s.key, atT), S.hist[N.store.histFrom(atT)]);

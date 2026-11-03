@@ -66,13 +66,13 @@ N.agent = (() => {
   }
 
   // ---------------- automatic damage report ----------------
-  // When the Nth damaged washer (settings ai.auto8d, 0 = off) has been pushed off by the gate, open the agent and
+  // When the Nth damaged washer (settings ai.auto8d, 0 = off) has been taken out by the gate, open the agent and
   // draft the 8D about the damage by itself. If the gate message never comes (continuous mode), 6 s after the verdict.
   let autoN = null, autoTimer = 0, autoDone = false;
   const damagedRejects = () => S.inspections.filter(r => r.verdict === 'REJECT' && r.damage).length;
   function autoDraft() {
     clearTimeout(autoTimer); autoTimer = 0; autoN = null; autoDone = true;
-    N.event('info', `${damagedRejects()} damaged washers pushed off. The NAZAR Agent is writing the 8D report about the damage.`);
+    N.event('info', `${damagedRejects()} damaged washers taken out by the gate. The NAZAR Agent is writing the 8D report about the damage.`);
     $('agent').hidden = false;
     draft('damage');
   }
@@ -84,7 +84,7 @@ N.agent = (() => {
     autoTimer = setTimeout(autoDraft, 6000);
   });
   N.on('msg:gate', m => {
-    if (autoN != null && m.n === autoN) { clearTimeout(autoTimer); autoTimer = setTimeout(autoDraft, 1500); }   // let the kick be seen first
+    if (autoN != null && m.n === autoN) { clearTimeout(autoTimer); autoTimer = setTimeout(autoDraft, 1500); }   // let the gate move be seen first
   });
 
   function showWaiting() {
@@ -267,7 +267,7 @@ N.agent = (() => {
     const sections = [
       ['D1', 'Team', 'Team Parakh: line operator, maintenance (motor and conveyor), quality (AI inspection), and the NAZAR console as data recorder.'],
       ['D2', 'Problem', `${st.bad} of ${st.n} inspected washers (${pct(st.rate)}) were held or rejected by the AI inspection.${c ? ` Bad parts were ${fmt(c.ratio, 1)} times more likely while ${name} was past its amber limit.` : ''}`],
-      ['D3', 'Containment', 'Rejected washers are pushed off by the gate and held washers are checked by hand before release. Parts made while the alarm was on are kept apart and re-checked.'],
+      ['D3', 'Containment', 'Rejected washers are taken out at the reject gate and held washers are checked by hand before release. Parts made while the alarm was on are kept apart and re-checked.'],
       ['D4', 'Root cause', c ? `Stratifying the inspections by machine state shows ${name} as the factor that matters (p = ${c.p_value < 0.001 ? '< 0.001' : fmt(c.p_value, 3)}). Why does the washer look bad? It moved under the camera. Why did it move? The belt and motor shook. Why did they shake? The motor mount screws worked loose.` : 'No machine state stands out yet. Keep collecting inspections.'],
       ['D5', 'Corrective action', c && st.cause === 'vib' ? 'Tighten the motor mount screws, add thread-locker and a spring washer, and re-check after one hour of running.' : 'Act on the factor that stands out once there is one.'],
       ['D6', 'Verification', ba ? `Before the fix: ${ba.before_bad} bad of ${ba.before_n} (${pct(ba.before_n ? ba.before_bad / ba.before_n : 0)}). After the fix: ${ba.after_bad} bad of ${ba.after_n} (${pct(ba.after_n ? ba.after_bad / ba.after_n : 0)}).` : 'Press Mark fix applied after the fix, run the line, then Draft again to compare before and after.'],

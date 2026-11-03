@@ -18,7 +18,8 @@ N.demoBoard = (() => {
       insp: null,             // {n, stoppedFor, verdict}
       flow: null, toStopN: 0,  // continuous mode: part waiting for a verdict
       gates: [],              // [{n, left}] ms of running time until the gate fires
-      gateOpen: 0,
+      gateOpen: 0,            // kick: ms the arm stays out
+      blocked: false,         // stop gate: arm across the belt until the next good washer
       before: 'RUN',          // mode to return to after STOP
       temp: 32.5, vibLoose: 0, fixed: false, holdFor: 0,
     };
@@ -81,10 +82,10 @@ N.demoBoard = (() => {
       for (const g of b.gates) g.left -= dt;
       const due = b.gates.filter(g => g.left <= 0);
       b.gates = b.gates.filter(g => g.left > 0);
-      for (const g of due) { b.rej += 1; b.gateOpen = b.cfg.gate_open_ms; send({ t: 'gate', n: g.n }); }
+      for (const g of due) fire(g.n);
     }
     if (b.gateOpen > 0) b.gateOpen -= dt;
-    b.gate = b.gateOpen > 0 ? 1 : 0;
+    b.gate = b.blocked || b.gateOpen > 0 ? 1 : 0;
 
     // --- sensors ---
     const loose = looseLevel(sec);
@@ -113,9 +114,16 @@ N.demoBoard = (() => {
     send({ t: 'inspect', n });
   }
 
+  function fire(n) {
+    b.rej += 1;
+    if (b.cfg.kick) b.gateOpen = b.cfg.gate_open_ms; else b.blocked = true;
+    send({ t: 'gate', n });
+  }
+
   function go(res) {
     const n = b.insp ? b.insp.n : b.parts;
     if (res === 'reject') b.gates.push({ n, left: b.cfg.gate_ms });
+    else if (!b.gates.length) b.blocked = false;          // stop gate: a good washer opens the path again
     b.insp = null; b.mode = 'RUN'; b.belt = 1;
     send({ t: 'go', n, res });
   }
@@ -131,7 +139,10 @@ N.demoBoard = (() => {
         if (b.mode === 'HOLD') send({ t: 'err', msg: `${cmd} ignored: line is on HOLD` });
         else if (b.mode === 'INSPECT' && b.insp && !b.insp.verdict) { b.insp.verdict = cmd; ack(); }
         else if (b.mode === 'INSPECT' && b.insp) send({ t: 'err', msg: `${cmd} ignored: part ${b.insp.n} already has a verdict` });
-        else if (b.flow) { if (cmd === 'FAIL') b.gates.push({ n: b.flow.n, left: b.cfg.gate_ms }); b.flow = null; ack(); }
+        else if (b.flow) {
+          if (cmd === 'FAIL') b.gates.push({ n: b.flow.n, left: b.cfg.gate_ms }); else if (!b.gates.length) b.blocked = false;
+          b.flow = null; ack();
+        }
         else send({ t: 'err', msg: `${cmd} ignored: no part waiting for a verdict` });
         break;
       case 'SEEN':                                          // the console camera sees a washer: stop at once
@@ -145,7 +156,7 @@ N.demoBoard = (() => {
         ack(); break;
       case 'RESUME':
         if (b.mode === 'HOLD') {
-          if (b.insp) { const n = b.insp.n; b.insp = null; send({ t: 'go', n, res: 'hold-released' }); }
+          if (b.insp) { const n = b.insp.n; b.insp = null; if (!b.gates.length) b.blocked = false; send({ t: 'go', n, res: 'hold-released' }); }
           b.mode = 'RUN'; b.belt = 1;
         }
         ack(); break;
@@ -155,7 +166,8 @@ N.demoBoard = (() => {
       case 'START':
         if (b.mode === 'STOP') { b.mode = b.before; b.belt = (b.mode === 'RUN') ? 1 : 0; }
         ack(); break;
-      case 'REJECT': b.rej += 1; b.gateOpen = b.cfg.gate_open_ms; send({ t: 'gate', n: 0 }); ack(); break;
+      case 'REJECT': ack(); fire(0); break;
+      case 'RELEASE': b.blocked = false; ack(); break;
       case 'BELT':
         if (b.mode === 'STOP') { b.belt = parts[1] === '1' ? 1 : 0; ack(); }
         else send({ t: 'err', msg: 'BELT only works in STOP mode' });

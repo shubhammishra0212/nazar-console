@@ -89,7 +89,9 @@ vision service, and `&show=agent|limits|serial|ai|camera|detail&after=20000` to 
   offline. `js/trigger.js` sends 640-px frames to the vision `/locate` ~8 times a second while the belt runs and
   sends `SEEN` when a whole washer's centre is inside the middle zone (AI & timing › Camera stop zone, default 50 %);
   the next washer can only stop the belt after the middle has been empty for 3 looks, so space washers about one
-  camera view apart. AI & timing › Part trigger switches back to the IR sensor (`SET cam 0`). Each shows value, status word and a 60 s sparkline
+  camera view apart. AI & timing › Part trigger switches back to the IR sensor (`SET cam 0`).
+  Reject gate (firmware 2.2+): stop gate by default — the tile reads Washers pass / Holding a reject, and its key
+  becomes **Open gate** (`RELEASE`) while the arm holds a reject. AI & timing has the gate mode and both arm angles. Each shows value, status word and a 60 s sparkline
   with amber and red lines; "No signal" when the key has been missing for 3 s. Click for **Sensor detail**: 30 s to
   15 min, Pause (Space), ← → to step, stats, switch sensor keeping the pause.
 - **Line status**: one big word — RUNNING, INSPECTING, CHECK SOON, STOP & CHECK, ON HOLD, STOPPED, NO DATA, NOT

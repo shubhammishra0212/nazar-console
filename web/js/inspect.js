@@ -29,7 +29,11 @@ N.inspect = (() => {
     if (current && current.n === m.n) current = null;
     N.emit('inspection-state');
   });
-  N.on('msg:gate', m => N.event('info', m.n ? `Reject gate fired for part ${m.n}.` : 'Reject gate fired (manual test).'));
+  N.on('msg:gate', m => {
+    if (!N.stopGate()) N.event('info', m.n ? `Reject gate fired for part ${m.n}.` : 'Reject gate fired (manual test).');
+    else if (m.n) N.event('red', `Gate closed for part ${m.n}: it will be stopped at the gate. Take it off the belt; the next good washer opens the gate again.`);
+    else N.event('info', 'Gate closed by hand (test). Press Open gate on the Reject gate tile to open it.');
+  });
   N.on('reset', () => { current = null; done.clear(); });
 
   async function run(n, kind) {
@@ -131,7 +135,7 @@ N.inspect = (() => {
 
     const what = r.damage ? ` ${r.damage.text}.` : '';
     if (verdict === 'HOLD') S.held = { n, crop: r.crop, heatmap: r.heatmap, score: r.score };
-    if (verdict === 'REJECT') N.event('red', `Part ${n}: REJECT (score ${fmt(r.score, 2)}).${what} The gate will push it off.`);
+    if (verdict === 'REJECT') N.event('red', `Part ${n}: REJECT (score ${fmt(r.score, 2)}).${what} ${N.stopGate() ? 'The gate will stop it.' : 'The gate will push it off.'}`);
     else if (verdict === 'HOLD') N.event('amber', `Part ${n}: HOLD (score ${fmt(r.score, 2)}).${what} The line waits for a person to check it.`);
     else if (!real) N.event(verdict === 'NO_PART' ? 'info' : 'amber', `Part ${n}: not judged (${SKIP_TEXT[verdict] || verdict}). Sent PASS so the line keeps moving.`);
     if (current && current.n === n && kind === 'flow') current = null;

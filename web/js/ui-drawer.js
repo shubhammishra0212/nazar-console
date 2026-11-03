@@ -105,8 +105,10 @@ N.uiDrawer = (() => {
     ['stop_ms', 'Stop delay (IR only)', 'ms', 'IR trigger: belt runs this long after the IR sensor, so the washer stops centred under the camera.'],
     ['dwell_ms', 'Stop time', 'ms', 'Shortest time a washer stays stopped under the camera.'],
     ['wait_ms', 'Verdict wait', 'ms', 'No verdict by then: the washer passes. The line never waits forever.'],
-    ['gate_ms', 'Gate delay', 'ms', 'Belt running time from restart until the gate fires for a reject.'],
-    ['gate_open_ms', 'Gate open time', 'ms', 'How long the gate stays open.'],
+    ['gate_ms', 'Gate delay', 'ms', 'Belt running time from restart until the arm swings across for a reject. Stop gate: anything shorter than the trip to the arm works.'],
+    ['gate_open_ms', 'Kick time (kick only)', 'ms', 'Kick mode: how long the arm stays out, in belt running time.'],
+    ['park_deg', 'Arm parked (washers pass)', '°', 'Servo angle with the arm along the rail. Changes move the arm at once (Test gate to see it).', '5'],
+    ['block_deg', 'Arm across the belt', '°', 'Servo angle with the arm square across the belt, so a reject is stopped and cannot slide past.', '5'],
   ];
 
   function setTiming(key, val) {
@@ -148,8 +150,8 @@ N.uiDrawer = (() => {
     grid.append(svc);
 
     const tm = el('div', { class: 'fbox' }, el('h4', {}, 'Line timing', el('small', { text: 'sent to the ESP32 with SET after every connect' })));
-    for (const [k, label, unit, note] of TIMING) {
-      const r = numberRow(label, unit, T[k], v => setTiming(k, v), '10');
+    for (const [k, label, unit, note, step] of TIMING) {
+      const r = numberRow(label, unit, T[k], v => setTiming(k, v), step || '10');
       r.title = note;
       if (k in cfg && cfg[k] !== T[k]) r.append(el('span', { class: 'unit', text: `board has ${cfg[k]}` }));
       tm.append(r);
@@ -162,7 +164,12 @@ N.uiDrawer = (() => {
     trig.value = String(T.cam);
     trig.addEventListener('change', () => setTiming('cam', Number(trig.value)));
     tm.append(el('div', { class: 'frow wide' }, el('span', { text: 'Part trigger' }), trig));
+    const kick = el('select', {}, new Option('Stop rejects at the gate (0)', '0'), new Option('Kick rejects off (1)', '1'));
+    kick.value = String(T.kick);
+    kick.addEventListener('change', () => setTiming('kick', Number(kick.value)));
+    tm.append(el('div', { class: 'frow wide' }, el('span', { text: 'Reject gate' }), kick));
     if (!('cam' in cfg) && S.source !== 'none') tm.append(el('p', { class: 'fnote', text: 'This firmware has no camera trigger: upload firmware 2.1 or newer.' }));
+    if (!('kick' in cfg) && S.source !== 'none') tm.append(el('p', { class: 'fnote', text: 'This firmware only kicks: upload firmware 2.2 or newer for the stop gate and arm angles.' }));
     const zr = numberRow('Camera stop zone (middle of picture)', '%', S.settings.trig.zone, v => {
       S.settings.trig.zone = Math.min(100, Math.max(10, Math.round(v ?? 50))); N.store.saveSettings(); setTimeout(renderAI, 50);
     }, '5');

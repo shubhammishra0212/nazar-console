@@ -9,7 +9,8 @@ N.DEFAULTS = {
     temp: { amber: 45, red: 60 },                // motor can, °C
     lux: { amber: 300, red: 120 },               // tunnel light: alarm BELOW these
   },
-  timing: { stop_ms: 150, dwell_ms: 1200, wait_ms: 5000, gate_ms: 800, gate_open_ms: 600, stops: 1, cam: 1 },
+  timing: { stop_ms: 150, dwell_ms: 1200, wait_ms: 5000, gate_ms: 800, gate_open_ms: 600, stops: 1, cam: 1,
+    kick: 0, park_deg: 0, block_deg: 90 },   // kick 0 = stop gate: the arm stays across the belt for a reject
   trig: { zone: 50, everyMs: 120 },   // camera part trigger: washer centre inside the middle zone % of the picture
   ai: {
     on: true,
@@ -19,7 +20,7 @@ N.DEFAULTS = {
     hold: null,          // threshold overrides; null = use the model's own
     reject: null,
     demoUsesAI: false,   // Demo data, but photos go to the real vision service (test the AI without the line)
-    auto8d: 2,           // after this many damaged washers are pushed off, the agent drafts the damage 8D (0 = off)
+    auto8d: 2,           // after this many damaged washers reach the gate, the agent drafts the damage 8D (0 = off)
     startVision: '~/Downloads/NAZAR/11-Onsite-Build/nazar-vision/Start Vision.command',
     startAgent: '~/Downloads/NAZAR/11-Onsite-Build/nazar-agent/Start Agent.command',
   },
@@ -48,6 +49,9 @@ N.S = {
   ai: { state: 'unknown', model: '', hold: null, reject: null, ms: null, checkedAt: 0 },
   events: [],
 };
+
+/** Stop gate (firmware 2.2+, kick 0): the arm stays across the belt and holds the reject. Older firmware kicks. */
+N.stopGate = () => !!(N.S.link.cfg && N.S.link.cfg.kick === 0);
 
 N.HIST_MAX = 100000;     // ~2.8 h at 10 lines/s
 
